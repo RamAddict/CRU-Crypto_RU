@@ -1,0 +1,7 @@
+# ignore *
+vars/
+/node/node_modules
+minifab
+/node/dist
+# except
+# !

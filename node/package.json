@@ -1,0 +1,20 @@
+{
+  "name": "chaincode",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build::transpile": "tsc --project tsconfig.json",
+    "build::copy": "sudo cp -rf ./dist/* ../vars/chaincode/mycc/node",
+    "build": "run-s build::transpile build::copy"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "npm-run-all": "^4.1.5",
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "fabric-shim": "^2.2.1"
+  }
+}
