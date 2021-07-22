@@ -4,9 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "build::transpile": "tsc --project tsconfig.json",
+    "build::create_dir": "sudo mkdir -p ../vars/chaincode/mycc/node",
     "build::copy": "sudo cp -rf ./dist/* ../vars/chaincode/mycc/node",
-    "build": "run-s build::transpile build::copy"
+    "build::copy_package_json": "sudo cp ./package.json ../vars/chaincode/mycc/node",
+    "build": "run-s build::transpile build::create_dir build::copy build::copy_package_json"
   },
   "author": "",
   "license": "ISC",
