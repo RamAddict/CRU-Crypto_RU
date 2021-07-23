@@ -1,33 +1,19 @@
 import { ChaincodeResponse, ChaincodeStub, Shim } from "fabric-shim";
 import { Token, ETState } from "./Token";
 class Chaincode {
+    // doesn't require any parameters, for now
     async Init(stub: ChaincodeStub): Promise<ChaincodeResponse> {
         console.info('========= example02 Init =========');
         let ret = stub.getFunctionAndParameters();
         console.info(ret);
-        let args = ret.params;
-        // initialise only if 4 parameters passed.
-        if (args.length != 4) {
-            return Shim.error(Buffer.from('Incorrect number of arguments. Expecting 4'));
-        }
 
-        let A = args[0];
-        let B = args[2];
-        let Aval = args[1];
-        let Bval = args[3];
-
-        if (typeof parseInt(Aval) !== 'number' || typeof parseInt(Bval) !== 'number') {
-            return Shim.error(Buffer.from('Expecting integer value for asset holding'));
-        }
+        const initialToken = new Token(ETState.ISSUED, 1, "mec", "2021-01-01", "2022-01-01", 1e6);
 
         try {
-            await stub.putState(A, Buffer.from(Aval));
-            try {
-                await stub.putState(B, Buffer.from(Bval));
-                return Shim.success();
-            } catch (err) {
-                return Shim.error(err);
-            }
+            console.log(initialToken.serialize())
+            console.log(initialToken.produceKey())
+            stub.putState(initialToken.produceKey(), initialToken.serialize());
+            return Shim.success();
         } catch (err) {
             return Shim.error(err);
         }

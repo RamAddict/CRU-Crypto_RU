@@ -15,12 +15,14 @@ export class Token {
                 owner: string,
                 issueDate: string,
                 maturityDate: string,
+                faceValue: number
         ) {
         this.currentState = currentState;
         this.tokenId = tokenID;
         this.owner = owner;
         this.issueDate = issueDate;
         this.maturityDate = maturityDate;
+        this.faceValue = faceValue
     }
     // Token current state
     currentState!: ETState;
@@ -33,5 +35,19 @@ export class Token {
     // Maturity date
     maturityDate!: string;
     // Face value
-    current!: string;
+    faceValue!: number;
+
+     /**
+     * Convert object to buffer containing JSON data serialization
+     * Typically used before putState()ledger API
+     * @param {Object} JSON object to serialize
+     * @return {buffer} buffer with the data to store
+     */
+    serialize(): Uint8Array {
+        return Buffer.from(JSON.stringify(this));
+    }
+    produceKey(): string {
+        return "MEC_" + this.tokenId.toString();
+    }
+    
 }
