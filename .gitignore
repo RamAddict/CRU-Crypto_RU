@@ -3,5 +3,7 @@ vars/
 /node/node_modules
 minifab
 /node/dist
+notes.txt
+*.log
 # except
 # !

@@ -10,19 +10,18 @@ export enum ETState {
 
 export class Token {
 
-    constructor(currentState: ETState,
+    constructor(
                 tokenID: number,
                 owner: string,
-                issueDate: string,
-                maturityDate: string,
+                issueDate: Date,
+                maturityDate: Date,
                 faceValue: number
         ) {
-        this.currentState = currentState;
         this.tokenId = tokenID;
         this.owner = owner;
         this.issueDate = issueDate;
         this.maturityDate = maturityDate;
-        this.faceValue = faceValue
+        this.faceValue = faceValue;
     }
     // Token current state
     currentState!: ETState;
@@ -31,23 +30,23 @@ export class Token {
     // Token owner
     owner!: string;
     // Token issue date xx-xx-xxxx
-    issueDate!: string;
+    issueDate!: Date;
     // Maturity date
-    maturityDate!: string;
+    maturityDate!: Date;
     // Face value
     faceValue!: number;
 
      /**
-     * Convert object to buffer containing JSON data serialization
+     * Convert this object to buffer containing JSON data serialization
      * Typically used before putState()ledger API
-     * @param {Object} JSON object to serialize
-     * @return {buffer} buffer with the data to store
+     * @return {Buffer} buffer with the data to store
      */
     serialize(): Uint8Array {
         return Buffer.from(JSON.stringify(this));
     }
+
     produceKey(): string {
         return "MEC_" + this.tokenId.toString();
     }
-    
+
 }
