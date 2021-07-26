@@ -1,7 +1,7 @@
 import { ChaincodeResponse, ChaincodeStub, Shim } from "fabric-shim";
-import { Token, ETState } from "./Token";
+import { Token, ETState, IToken } from "./Token";
 
-
+const MEC = "mec-example-com";
 
 function parseStringArray(arr: Array<string>): (string | number | Boolean | Date)[] {
     return arr.map(el => {
@@ -76,13 +76,16 @@ class Chaincode {
             maturityDate: Date,
             faceValue: number
         ): Promise<Token> {
+            // incorrect params
+            if (!tokenID || !issueDate || !maturityDate || !faceValue)
+                throw new Error("Incorrent number of parameters");
             // stop from transacting if identity not Mec
-            if (stub.getMspID() !== "mec-example-com")
-                throw new Error("Identity not Mec, and therefore not allowed to issue tokens");
+            if (stub.getCreator().mspid !== MEC)
+                throw new Error("Command issuer not Mec, and therefore not allowed to issue tokens");
             // create token
             const token = new Token(
                 tokenID,
-                stub.getMspID(), // owner is hard-coded
+                MEC, // owner is hard-coded
                 issueDate,
                 maturityDate,
                 faceValue
@@ -94,19 +97,44 @@ class Chaincode {
             // return it
             return token;
         }
-    
-        /**
-         * Send a token to a beneficiary (student), assumes Mec is the only valid issuer
-         *
-         * @param {ChaincodeStub} stub the transaction context
-         * @param {number} tokenID token number for this issuer
-         * @param {string} issueDate token issue date
-         * @param {string} maturityDate token maturity date
-         * @param {number} faceValue face value of token
-        */
-        async sendToBeneficiary(stub: ChaincodeStub, tokenID: number, ) {
-    
+
+    /**
+     * Send a token to a beneficiary (student), assumes Mec is the only valid issuer
+     *
+     * @param {ChaincodeStub} stub the transaction context
+     * @param {number} tokenID token number for this issuer
+    */
+     async sendToBeneficiary(stub: ChaincodeStub, tokenID: number, beneficiary: string): Promise<Token> {
+        if (!tokenID || !beneficiary)
+            throw new Error("Incorrent number of parameters");
+        // stop from transacting if identity not Mec
+        if (stub.getCreator().mspid !== MEC)
+            throw new Error("Command issuer not Mec, and therefore not allowed to issue tokens");
+        // build key
+        const key = "MEC_" + tokenID.toString()
+        // get the token
+        const encodedToken = await stub.getState("MEC_" + tokenID.toString());
+        
+        if (!encodedToken) {
+            throw new Error("Failed to get token with key: " + key);
         }
+        // decode token from world state
+        const dehydratedToken = new TextDecoder().decode(encodedToken);
+        // rehydrate it
+        const token = Token.hydrateFromJSON(JSON.parse(dehydratedToken) as IToken);
+        
+        if (token.currentState !== ETState.ISSUED)
+            throw new Error("Token in wrong state, current state: " + ETState[token.currentState])
+        // set state
+        token.currentState = ETState.DEPOSITED
+        // set new owner
+        token.owner = beneficiary
+        // set state on ledger
+        stub.putState(token.produceKey(), token.serialize())
+        
+        return token
+    }
+
 
     // Transaction makes payment of X units from A to B
     async invoke(stub: ChaincodeStub, args: string[]) {
@@ -182,6 +210,8 @@ class Chaincode {
         jsonResp.amount = Avalbytes.toString();
         console.info("Query Response:");
         console.info(jsonResp);
+        if (jsonResp.amount === '')
+            return Shim.success(Buffer.from("no data here, amount empty"));
         return Shim.success(Avalbytes);
     }
 }

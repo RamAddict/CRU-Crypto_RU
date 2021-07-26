@@ -5,5 +5,7 @@ minifab
 /node/dist
 notes.txt
 *.log
+/testingFolder
+explorer/
 # except
 # !

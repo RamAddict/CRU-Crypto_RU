@@ -12,6 +12,6 @@ CODE_VERSION=${CODE_CVERSION:-1}
 
 CODE_VERSION=$((CODE_VERSION+1))
 echo $CODE_VERSION
-minifab install,approve,commit,initialize -n mycc -v 1.$CODE_VERSION -p '"init", "a", "200"'
+minifab install,approve,commit,initialize -n mycc -l node -v 1.$CODE_VERSION  -y 'OutOf(2, "mec-example-com.member", "student-example-com.member", "ufsc-example-com.member")' -p '"init"'
 export CODE_CVERSION=$CODE_VERSION
 echo $CODE_CVERSION
