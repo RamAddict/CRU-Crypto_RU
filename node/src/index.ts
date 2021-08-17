@@ -1,6 +1,6 @@
 import { ChaincodeResponse, ChaincodeStub, Shim } from "fabric-shim";
 import { Token, ETState, IToken } from "./Token";
-
+import { ITXList, TXList } from "./UTXO";
 const MEC = "mec-example-com";
 
 function parseStringArray(arr: Array<string>): (string | number | Boolean | Date)[] {
@@ -20,6 +20,17 @@ function parseStringArray(arr: Array<string>): (string | number | Boolean | Date
         }
     })
 }
+
+function getType(obj: number | Token | ChaincodeResponse): string {
+    if (!Number.isNaN(Number(obj))) {
+        return "Number";
+    } else if (Object.keys(obj).includes("faceValue")) {
+        return "Token";
+    } else {
+        return "ChaincodeResponse";
+    }
+}
+
 class Chaincode {
     // doesn't require any parameters, for now
     async Init(stub: ChaincodeStub): Promise<ChaincodeResponse> {
@@ -28,11 +39,19 @@ class Chaincode {
         console.info(ret);
         
         try {
+            // Create UTXOLIST
+            let initialIssue = new Token(
+                await Chaincode.produceNextId(stub), 
+                MEC, 
+                new Date("2021-01-01"), 
+                new Date("2022-01-01"), 
+                1e6);
+            initialIssue.currentState = ETState.ISSUED;
+            await stub.putState("UTXOLIST", 
+                          new TXList([initialIssue]).serialize());
             // create very first emission
-            // const token = await this.issue(stub, 1, new Date("2021-01-01"), new Date("2022-01-01"), 1e6);
-            
-            // return Shim.success(token.serialize());
-            return Shim.success(Buffer.from("initializedMen"));
+            return Shim.success(initialIssue.serialize());
+            // return Shim.success(Buffer.from("initializedMen"));
         } catch (err) {
             return Shim.error(err);
         }
@@ -42,7 +61,7 @@ class Chaincode {
         const ret = stub.getFunctionAndParameters();
         console.info(ret);
         const self = this
-        type AllowedMethod = "sendToBeneficiary" | "issue" | "query" | "Init";
+        type AllowedMethod = "sendToBeneficiary" | "issue" | "query" | "Init" | "getTokenCountByOwner" | "sendTokens";
         const method = self[ret.fcn as AllowedMethod];
         if (!method) {
             console.log("no method of name:" + ret.fcn + " found");
@@ -52,11 +71,164 @@ class Chaincode {
             const params = [stub, ...parseStringArray(ret.params)] as Parameters<typeof method>;
             // @ts-ignore
             const payload = await method(...params);
-            return Shim.success((payload as ChaincodeResponse).payload);
+            switch (getType(payload)) {
+                case "Number":
+                    return Shim.success(Buffer.from(payload.toString()));
+                case "Token":
+                    return Shim.success((payload as Token).serialize());
+                default:
+                    return Shim.success((payload as ChaincodeResponse).payload);
+            }
         } catch (err) {
             console.log(err);
             return Shim.error(err);
         }
+    }
+
+    /**
+     * Increments current tokenIDCounter and returns it. Creates if not exists.
+     *
+     * @param {ChaincodeStub} stub the transaction context
+     * @Return the updated counter
+    */
+     static async produceNextId(stub: ChaincodeStub): Promise<number> {
+        let id = 0;
+        try {
+            if (new TextDecoder().decode(await stub.getState("tokenIDCounter")) === null)
+            {
+                // init token id counter if not created
+                stub.putState("tokenIDCounter", Buffer.from("-1"));
+            }
+            id = 1 + Number((new TextDecoder().decode(await stub.getState("tokenIDCounter"))));
+            stub.putState("tokenIDCounter", Buffer.from(id.toString()));
+        } catch (err) {
+            console.log(err);
+        }
+        return id;
+    }
+
+    /**
+     * Checks if the owner has the tokens required and sends the tokens to the target
+     *
+     * @param {ChaincodeStub} stub the transaction context
+     * @param {string} from 
+     * @param {string} to 
+     * @Return the updated counter
+    */
+    async sendTokens(stub: ChaincodeStub, from: string, to: string, quantity: number): Promise<ChaincodeResponse> {
+        // check whoever is sending can send tokens
+        // TODO
+        if (from === to)
+            return Shim.success(Buffer.from("Not allowed to send tokens to same place"));
+        // check balance
+        let [tks, change] = await Chaincode.selectTksToSend(stub, from, quantity);
+        let logger = Shim.newLogger("LOGGING_OUT");
+        logger.level = "debug";
+        logger.debug(JSON.stringify(tks));
+        logger.debug(change);
+        // if no tokens found, return error
+        if (tks.length === 0)
+            return Shim.success(Buffer.from(from + " lacks funds"));
+        
+        let tokenList = (await Chaincode.getUTXOList(stub));
+
+        let expirationDate = new Date(tks[0].maturityDate);
+        let issueDate = new Date(tks[0].issueDate);
+        let tokenState = tks[0].currentState;
+        for (const token of tks) {
+            if (token.maturityDate < expirationDate)
+            {
+                expirationDate = token.maturityDate;
+                issueDate = token.issueDate;
+                tokenState = token.currentState;
+            }
+        }
+        if (change !== 0) {
+            // create change
+            let newToken = new Token(await Chaincode.produceNextId(stub), from, issueDate, expirationDate, change);
+            newToken.currentState = tokenState;
+            tokenList.txList.push(newToken);
+        }
+        // create the token with the amount sent in the name of the recipient
+        const tokenId = await Chaincode.produceNextId(stub);
+        let newToken = new Token(tokenId, to, issueDate, expirationDate, quantity);
+        newToken.currentState = tokenState;
+        tokenList.txList.push(newToken);
+        logger.warn(JSON.stringify(tokenList));
+
+        // delete these tokens
+        for (const tk of tks) {
+            tokenList.txList.splice(tokenList.txList.findIndex((token) => token.isEqual(tk)), 1);
+        }
+        // write this back on chaincode
+        await stub.putState("UTXOLIST", tokenList.serialize());
+
+        return Shim.success(Buffer.from("Transferred " + quantity + " from " + from + " to " + to + " tokenId: " + tokenId));
+    }
+
+    static async selectTksToSend(stub: ChaincodeStub, owner: string, quantity: number): Promise<[Token[], number]> {
+        // get only the tokens that belong to the owner
+        let tokensOfOwner = (await Chaincode.getUTXOList(stub)).txList.filter((token) => {
+            return token.owner === owner;
+        });
+        // seprate the ones bigger and smaller from the list
+        let greaters = (tokensOfOwner).filter((token) => {return token.faceValue >= quantity});
+        let change = 0;
+        if (typeof greaters !== 'undefined' && greaters.length > 0)
+        {
+            // get min value
+            let min = greaters[0];
+            for (const e of greaters) {
+                if (min.faceValue < e.faceValue)
+                min = e;
+            }
+            change = min.faceValue - quantity;
+            return [[min], change]
+        }
+        // no values above the required, look for the sum in the lessers
+        let lessers = (tokensOfOwner).filter((token) => {return token.faceValue < quantity});
+        // sort values
+        lessers.sort((left, right) => {return left.faceValue - right.faceValue});
+        let output = [];
+        let sum = 0;
+        for (const token of lessers) {
+            output.push(token);
+            sum += token.faceValue;
+            if (sum >= quantity) {
+                change = sum - quantity;
+                return [output, change]
+            }
+        }
+        // not enough funds
+        return [[], -1];
+    }
+
+    /**
+     * Get the list of unspent transactions
+     *
+     * @param {ChaincodeStub} stub the transaction context
+     * @Return the transaction list
+    */
+    static async getUTXOList(stub: ChaincodeStub): Promise<TXList> {
+        return TXList.hydrateFromJSON(JSON.parse(new TextDecoder().decode(await stub.getState("UTXOLIST"))) as ITXList);
+    }
+
+    /**
+     *  Gets the number of tokens of a certain identity.
+     *
+     * @param {ChaincodeStub} stub the transaction context
+     * @param {string} owner the identity
+     * @Return the current c
+    */
+    async getTokenCountByOwner(stub: ChaincodeStub, owner: string): Promise<number> {
+        // query the elements in the UTXOLIST
+        let accum = 0;
+        (await Chaincode.getUTXOList(stub)).txList.map((token) => {
+            if (token.owner === owner)
+                accum += token.faceValue;
+        });
+
+        return accum;
     }
 
     /**
@@ -131,7 +303,6 @@ class Chaincode {
         token.owner = beneficiary
         // set state on ledger
         stub.putState(token.produceKey(), token.serialize())
-        
         return token
     }
 

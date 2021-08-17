@@ -59,6 +59,15 @@ export class Token implements IToken {
         return "MEC_" + this.tokenId.toString();
     }
 
+    isEqual(other: Token): boolean {
+        return this.currentState === other.currentState && 
+        this.tokenId === other.tokenId && 
+        this.owner === other.owner && 
+        this.issueDate === other.issueDate &&
+        this.maturityDate === other.maturityDate &&
+        this.faceValue === other.faceValue;
+    }
+
     static hydrateFromJSON({
         currentState,
         issueDate,
@@ -66,7 +75,7 @@ export class Token implements IToken {
         maturityDate,
         owner,
         tokenId,
-    }: IToken) {
+    }: IToken): Token {
         const token = new Token(tokenId, owner, issueDate, maturityDate, faceValue);
         token.currentState = currentState;
         return token;
