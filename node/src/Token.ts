@@ -80,4 +80,8 @@ export class Token implements IToken {
         token.currentState = currentState;
         return token;
     }
+
+    toString(): string {
+        return JSON.stringify(this);
+    }
 }

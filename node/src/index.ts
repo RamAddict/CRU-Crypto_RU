@@ -61,7 +61,7 @@ class Chaincode {
         const ret = stub.getFunctionAndParameters();
         console.info(ret);
         const self = this
-        type AllowedMethod = "sendToBeneficiary" | "issue" | "query" | "Init" | "getTokenCountByOwner" | "sendTokens";
+        type AllowedMethod = "sendToBeneficiary" | "issue" | "query" | "Init" | "getTokenCountByOwner" | "sendTokens" | "getHist";
         const method = self[ret.fcn as AllowedMethod];
         if (!method) {
             console.log("no method of name:" + ret.fcn + " found");
@@ -145,13 +145,12 @@ class Chaincode {
         }
         if (change !== 0) {
             // create change
-            let newToken = new Token(await Chaincode.produceNextId(stub), from, issueDate, expirationDate, change);
+            let newToken = new Token(tks[0].tokenId, from, issueDate, expirationDate, change);
             newToken.currentState = tokenState;
             tokenList.txList.push(newToken);
         }
         // create the token with the amount sent in the name of the recipient
-        const tokenId = await Chaincode.produceNextId(stub);
-        let newToken = new Token(tokenId, to, issueDate, expirationDate, quantity);
+        let newToken = new Token(tks[0].tokenId, to, issueDate, expirationDate, quantity);
         newToken.currentState = tokenState;
         tokenList.txList.push(newToken);
         logger.warn(JSON.stringify(tokenList));
@@ -163,7 +162,7 @@ class Chaincode {
         // write this back on chaincode
         await stub.putState("UTXOLIST", tokenList.serialize());
 
-        return Shim.success(Buffer.from("Transferred " + quantity + " from " + from + " to " + to + " tokenId: " + tokenId));
+        return Shim.success(Buffer.from("Transferred " + quantity + " from " + from + " to " + to + " tokenId: " + tks[0].tokenId));
     }
 
     static async selectTksToSend(stub: ChaincodeStub, owner: string, quantity: number): Promise<[Token[], number]> {
@@ -306,48 +305,6 @@ class Chaincode {
         return token
     }
 
-
-    // Transaction makes payment of X units from A to B
-    async invoke(stub: ChaincodeStub, args: string[]) {
-        if (args.length != 3) {
-            throw new Error("Incorrect number of arguments. Expecting 3");
-        }
-
-        const A = args[0];
-        const B = args[1];
-        if (!A || !B) {
-            throw new Error("asset holding must not be empty");
-        }
-
-        // Get the state from the ledger
-        const Avalbytes = await stub.getState(A);
-        if (!Avalbytes) {
-            throw new Error("Failed to get state of asset holder A");
-        }
-        let Aval = parseInt(Avalbytes.toString());
-
-        const Bvalbytes = await stub.getState(B);
-        if (!Bvalbytes) {
-            throw new Error("Failed to get state of asset holder B");
-        }
-
-        let Bval = parseInt(Bvalbytes.toString());
-        // Perform the execution
-        const amount = parseInt(args[2]);
-        if (typeof amount !== "number") {
-            throw new Error(
-                "Expecting integer value for amount to be transaferred"
-            );
-        }
-
-        Aval = Aval - amount;
-        Bval = Bval + amount;
-        console.log("Aval = %d, Bval = %d\n", Aval, Bval);
-
-        // Write the states back to the ledger
-        await stub.putState(A, Buffer.from(Aval.toString()));
-        await stub.putState(B, Buffer.from(Bval.toString()));
-    }
     // Deletes an entity from state
     async delete(stub: ChaincodeStub, args: string[]) {
         if (args.length != 1) {
@@ -358,6 +315,28 @@ class Chaincode {
 
         // Delete the key from the state in ledger
         await stub.deleteState(A);
+    }
+
+    async getHist(stub: ChaincodeStub, key: string): Promise<ChaincodeResponse> {
+        const list = [];
+        const historyQueryIterator = await stub.getHistoryForKey(key);
+        while (true) {
+            let jsonResp : {txId?: string, timestamp?: Date, isDelete?: boolean, value?: TXList} = {};
+            const res = await historyQueryIterator.next();
+            if (res.done)
+            {
+                await historyQueryIterator.close();
+                return Shim.success(Buffer.from(JSON.stringify(list)));
+            }
+            jsonResp.txId = res.value.txId
+            jsonResp.timestamp = new Date(res.value.timestamp.nanos*1e9);
+            if (res.value.isDelete) {
+                jsonResp.isDelete = res.value.isDelete
+            } else {
+                jsonResp.value = TXList.hydrateFromJSON(JSON.parse(new TextDecoder().decode(res.value.value)))
+            }
+            list.push(jsonResp);
+        }
     }
     // query callback representing the query of a chaincode
     async query(stub: ChaincodeStub, ...args: string[]): Promise<ChaincodeResponse> {
