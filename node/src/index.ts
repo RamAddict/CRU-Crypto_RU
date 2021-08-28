@@ -32,9 +32,12 @@ function getType(obj: number | Token | ChaincodeResponse): string {
 }
 
 class Chaincode {
+    static logger = Shim.newLogger("LOGGING_OUT");
+
     // doesn't require any parameters, for now
     async Init(stub: ChaincodeStub): Promise<ChaincodeResponse> {
         console.info("========= example02 Init =========");
+        Chaincode.logger.level = "debug";
         const ret = stub.getFunctionAndParameters();
         console.info(ret);
         
@@ -61,11 +64,11 @@ class Chaincode {
         const ret = stub.getFunctionAndParameters();
         console.info(ret);
         const self = this
-        type AllowedMethod = "sendToBeneficiary" | "issue" | "query" | "Init" | "getTokenCountByOwner" | "sendTokens" | "getHist";
+        type AllowedMethod = "getBalance" | "issue" | "query" | "Init" | "sendTokens" | "getHist";
         const method = self[ret.fcn as AllowedMethod];
         if (!method) {
             console.log("no method of name:" + ret.fcn + " found");
-            return Shim.success();
+            return Shim.error(Buffer.from("no method of name:" + ret.fcn + " found"));
         }
         try {
             const params = [stub, ...parseStringArray(ret.params)] as Parameters<typeof method>;
@@ -77,7 +80,7 @@ class Chaincode {
                 case "Token":
                     return Shim.success((payload as Token).serialize());
                 default:
-                    return Shim.success((payload as ChaincodeResponse).payload);
+                    return (payload as ChaincodeResponse);
             }
         } catch (err) {
             console.log(err);
@@ -118,17 +121,19 @@ class Chaincode {
     async sendTokens(stub: ChaincodeStub, from: string, to: string, quantity: number): Promise<ChaincodeResponse> {
         // check whoever is sending can send tokens
         // TODO
+        if (!from || !to || !quantity)
+            return Shim.error(Buffer.from("Incorrent number of parameters"));
         if (from === to)
-            return Shim.success(Buffer.from("Not allowed to send tokens to same place"));
+            return Shim.error(Buffer.from("Not allowed to send tokens to same place"));
+        if (quantity < 0.1)
+            return Shim.error(Buffer.from("Not allowed to send less than 0.1 tokens"));
         // check balance
         let [tks, change] = await Chaincode.selectTksToSend(stub, from, quantity);
-        let logger = Shim.newLogger("LOGGING_OUT");
-        logger.level = "debug";
-        logger.debug(JSON.stringify(tks));
-        logger.debug(change);
+        Chaincode.logger.debug(JSON.stringify(tks));
+        Chaincode.logger.debug(change);
         // if no tokens found, return error
         if (tks.length === 0)
-            return Shim.success(Buffer.from(from + " lacks funds"));
+            return Shim.error(Buffer.from(from + " lacks funds"));
         
         let tokenList = (await Chaincode.getUTXOList(stub));
 
@@ -153,7 +158,7 @@ class Chaincode {
         let newToken = new Token(tks[0].tokenId, to, issueDate, expirationDate, quantity);
         newToken.currentState = tokenState;
         tokenList.txList.push(newToken);
-        logger.warn(JSON.stringify(tokenList));
+        Chaincode.logger.warn(JSON.stringify(tokenList));
 
         // delete these tokens
         for (const tk of tks) {
@@ -167,11 +172,11 @@ class Chaincode {
 
     static async selectTksToSend(stub: ChaincodeStub, owner: string, quantity: number): Promise<[Token[], number]> {
         // get only the tokens that belong to the owner
-        let tokensOfOwner = (await Chaincode.getUTXOList(stub)).txList.filter((token) => {
-            return token.owner === owner;
-        });
+        let tokensOfOwner = (await Chaincode.getUTXOList(stub)).txList.filter((token) => 
+            token.owner === owner
+        );
         // seprate the ones bigger and smaller from the list
-        let greaters = (tokensOfOwner).filter((token) => {return token.faceValue >= quantity});
+        const greaters = (tokensOfOwner).filter((token) => token.faceValue >= quantity);
         let change = 0;
         if (typeof greaters !== 'undefined' && greaters.length > 0)
         {
@@ -185,9 +190,9 @@ class Chaincode {
             return [[min], change]
         }
         // no values above the required, look for the sum in the lessers
-        let lessers = (tokensOfOwner).filter((token) => {return token.faceValue < quantity});
+        let lessers = (tokensOfOwner).filter((token) => token.faceValue < quantity);
         // sort values
-        lessers.sort((left, right) => {return left.faceValue - right.faceValue});
+        lessers.sort((left, right) => left.faceValue - right.faceValue);
         let output = [];
         let sum = 0;
         for (const token of lessers) {
@@ -219,10 +224,10 @@ class Chaincode {
      * @param {string} owner the identity
      * @Return the current c
     */
-    async getTokenCountByOwner(stub: ChaincodeStub, owner: string): Promise<number> {
+    async getBalance(stub: ChaincodeStub, owner: string): Promise<number> {
         // query the elements in the UTXOLIST
         let accum = 0;
-        (await Chaincode.getUTXOList(stub)).txList.map((token) => {
+        (await Chaincode.getUTXOList(stub)).txList.forEach((token) => {
             if (token.owner === owner)
                 accum += token.faceValue;
         });
@@ -269,41 +274,6 @@ class Chaincode {
             return token;
         }
 
-    /**
-     * Send a token to a beneficiary (student), assumes Mec is the only valid issuer
-     *
-     * @param {ChaincodeStub} stub the transaction context
-     * @param {number} tokenID token number for this issuer
-    */
-     async sendToBeneficiary(stub: ChaincodeStub, tokenID: number, beneficiary: string): Promise<Token> {
-        if (!tokenID || !beneficiary)
-            throw new Error("Incorrent number of parameters");
-        // stop from transacting if identity not Mec
-        if (stub.getCreator().mspid !== MEC)
-            throw new Error("Command issuer not Mec, and therefore not allowed to issue tokens");
-        // build key
-        const key = "MEC_" + tokenID.toString()
-        // get the token
-        const encodedToken = await stub.getState("MEC_" + tokenID.toString());
-        
-        if (!encodedToken) {
-            throw new Error("Failed to get token with key: " + key);
-        }
-        // decode token from world state
-        const dehydratedToken = new TextDecoder().decode(encodedToken);
-        // rehydrate it
-        const token = Token.hydrateFromJSON(JSON.parse(dehydratedToken) as IToken);
-        
-        if (token.currentState !== ETState.ISSUED)
-            throw new Error("Token in wrong state, current state: " + ETState[token.currentState])
-        // set state
-        token.currentState = ETState.DEPOSITED
-        // set new owner
-        token.owner = beneficiary
-        // set state on ledger
-        stub.putState(token.produceKey(), token.serialize())
-        return token
-    }
 
     // Deletes an entity from state
     async delete(stub: ChaincodeStub, args: string[]) {
@@ -318,6 +288,8 @@ class Chaincode {
     }
 
     async getHist(stub: ChaincodeStub, key: string): Promise<ChaincodeResponse> {
+        if (!key)
+            throw new Error("Incorrent number of parameters");
         const list = [];
         const historyQueryIterator = await stub.getHistoryForKey(key);
         while (true) {
