@@ -55,10 +55,10 @@ export class Token implements IToken {
         return Buffer.from(JSON.stringify(this));
     }
 
-    produceKey(): string {
-        return "MEC_" + this.tokenId.toString();
-    }
-
+    /**
+     * Compare utility
+     * @return {boolean} true if 2 tokens are the equal in value
+     */
     isEqual(other: Token): boolean {
         return this.currentState === other.currentState && 
         this.tokenId === other.tokenId && 
@@ -67,7 +67,12 @@ export class Token implements IToken {
         this.maturityDate === other.maturityDate &&
         this.faceValue === other.faceValue;
     }
-
+    
+    /**
+     * Creates a Token object from a raw JSON object
+     * @param {IToken} token The object to rehydrate (typically the return of JSON.parse()) 
+     * @return {Token} The hydrated Token 
+     */
     static hydrateFromJSON({
         currentState,
         issueDate,
@@ -81,6 +86,10 @@ export class Token implements IToken {
         return token;
     }
 
+    /**
+     * Convert this object to string representation
+     * @return {string}
+     */
     toString(): string {
         return JSON.stringify(this);
     }

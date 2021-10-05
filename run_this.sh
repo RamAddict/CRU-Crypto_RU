@@ -1,4 +1,4 @@
-cd /home/arthur/mywork
+cd /home/arthur/CRU
 minifab cleanup -o mec.example.com 
 minifab up -o mec.example.com -y 'OutOf(2, "mec-example-com.member", "student-example-com.member", "ufsc-example-com.member")'  -n mycc -l node
 # blows up with minifab up for some reason
@@ -17,7 +17,7 @@ echo -e "\n\nbuilt code, will try to install it now\n\n"
 
 minifab install -n mycc -l node
 minifab approve,commit,initialize -p '"init"'
-minifab discover
+minifab discover, explorerup
 # minifab invoke -p  '"query", "a"'
 
 # minifab install,approve,commit,initialize -n mycc -v 1.1 -p '"init", "a", "200"'
@@ -27,6 +27,16 @@ minifab discover
 # Setup initial state
 
 # minifab invoke -p '"issue", "1", "2021-01-01", "2022-01-01", "1e6"'
-minifab invoke -p  '"query", "tokenIDCounter"'
+# minifab invoke -p  '"query", "tokenIDCounter"'
 # minifab invoke -p '"sendToBeneficiary", "1", "Ezequiel"'
 # minifab invoke -p  '"query", "MEC_1"'
+
+
+# minifab invoke -p '"getBalance", "mec-example-com"'
+# minifab invoke -p '"sendTokens", "mec-example-com", "Arthur", "1200"'
+# minifab invoke -p '"getBalance", "Arthur"'
+# minifab invoke -p '"getBalance", "mec-example-com"'
+# minifab invoke -o student.example.com -p '"issue", "26-09-2021", "26-09-2022", "500"'
+# minifab invoke -o mec.example.com -p '"issue", "26-09-2021", "26-09-2022", "500"'
+# minifab invoke -p '"showIdentity"'
+# minifab invoke -p '"getHist", "UTXOLIST"'

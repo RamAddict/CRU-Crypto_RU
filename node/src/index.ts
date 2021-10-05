@@ -1,8 +1,15 @@
-import { ChaincodeResponse, ChaincodeStub, Shim } from "fabric-shim";
-import { Token, ETState, IToken } from "./Token";
-import { ITXList, TXList } from "./UTXO";
+import { ChaincodeResponse, ChaincodeStub, ClientIdentity, Shim } from "fabric-shim";
+import { Token, ETState } from "./Token";
+import { ITXList, TXList } from "./TXList";
 const MEC = "mec-example-com";
 
+
+/**
+ * business unrelated function that takes a vector.
+ * and returns the appropriate type of each element of the array
+ * @param {Array} arr the parameter array
+ * @return {(string | number | Boolean | Date)[]} an array containing the elements with the appropriate type
+*/
 function parseStringArray(arr: Array<string>): (string | number | Boolean | Date)[] {
     return arr.map(el => {
         if (!Number.isNaN(Number(el))) {
@@ -21,6 +28,12 @@ function parseStringArray(arr: Array<string>): (string | number | Boolean | Date
     })
 }
 
+/**
+ * Business unrelated function that takes an object 
+ * and returns the appropriate type in string form
+ * @param {number | Token | ChaincodeResponse} obj The object to get the string type of
+ * @return {string} the string type
+*/
 function getType(obj: number | Token | ChaincodeResponse): string {
     if (!Number.isNaN(Number(obj))) {
         return "Number";
@@ -38,8 +51,6 @@ class Chaincode {
     async Init(stub: ChaincodeStub): Promise<ChaincodeResponse> {
         console.info("========= example02 Init =========");
         Chaincode.logger.level = "debug";
-        const ret = stub.getFunctionAndParameters();
-        console.info(ret);
         
         try {
             // Create UTXOLIST
@@ -55,7 +66,7 @@ class Chaincode {
             // create very first emission
             return Shim.success(initialIssue.serialize());
             // return Shim.success(Buffer.from("initializedMen"));
-        } catch (err) {
+        } catch (err: any) {
             return Shim.error(err);
         }
     }
@@ -82,7 +93,7 @@ class Chaincode {
                 default:
                     return (payload as ChaincodeResponse);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.log(err);
             return Shim.error(err);
         }
@@ -97,12 +108,10 @@ class Chaincode {
      static async produceNextId(stub: ChaincodeStub): Promise<number> {
         let id = 0;
         try {
-            if (new TextDecoder().decode(await stub.getState("tokenIDCounter")) === null)
+            if (new TextDecoder().decode(await stub.getState("tokenIDCounter")) !== null)
             {
-                // init token id counter if not created
-                stub.putState("tokenIDCounter", Buffer.from("-1"));
+                id = 1 + Number((new TextDecoder().decode(await stub.getState("tokenIDCounter"))));
             }
-            id = 1 + Number((new TextDecoder().decode(await stub.getState("tokenIDCounter"))));
             stub.putState("tokenIDCounter", Buffer.from(id.toString()));
         } catch (err) {
             console.log(err);
@@ -116,11 +125,10 @@ class Chaincode {
      * @param {ChaincodeStub} stub the transaction context
      * @param {string} from 
      * @param {string} to 
-     * @Return the updated counter
     */
     async sendTokens(stub: ChaincodeStub, from: string, to: string, quantity: number): Promise<ChaincodeResponse> {
-        // check whoever is sending can send tokens
         // TODO
+        // check whoever is sending can send tokens
         if (!from || !to || !quantity)
             return Shim.error(Buffer.from("Incorrent number of parameters"));
         if (from === to)
@@ -244,23 +252,27 @@ class Chaincode {
      * @param {string} maturityDate token maturity date
      * @param {number} faceValue face value of token
     */
-         async issue(
+        async issue(
             stub: ChaincodeStub,
-            tokenID: number,
             // owner: string,
             issueDate: Date,
             maturityDate: Date,
             faceValue: number
         ): Promise<Token> {
             // incorrect params
-            if (!tokenID || !issueDate || !maturityDate || !faceValue)
+            if (!issueDate || !maturityDate || !faceValue)
+            {
+                console.log(issueDate);
+                console.log(maturityDate);
+                console.log(faceValue);
                 throw new Error("Incorrent number of parameters");
+            }
             // stop from transacting if identity not Mec
             if (stub.getCreator().mspid !== MEC)
                 throw new Error("Command issuer not Mec, and therefore not allowed to issue tokens");
             // create token
             const token = new Token(
-                tokenID,
+                await Chaincode.produceNextId(stub),
                 MEC, // owner is hard-coded
                 issueDate,
                 maturityDate,
@@ -269,11 +281,12 @@ class Chaincode {
             // set Issued
             token.currentState = ETState.ISSUED;
             // add to world state
-            await stub.putState(token.produceKey(), token.serialize());
+            let UTXOLIST = (await Chaincode.getUTXOList(stub));
+            UTXOLIST.txList.push(token);
+            await stub.putState("UTXOLIST", UTXOLIST.serialize());
             // return it
             return token;
         }
-
 
     // Deletes an entity from state
     async delete(stub: ChaincodeStub, args: string[]) {
@@ -335,6 +348,18 @@ class Chaincode {
         if (jsonResp.amount === '')
             return Shim.success(Buffer.from("no data here, amount empty"));
         return Shim.success(Avalbytes);
+    }
+
+    async showIdentity(stub: ChaincodeStub): Promise<ChaincodeResponse> {
+        // the purpose here is to show what the identities are within minifabric 
+        let returnStatement = "";
+        returnStatement += "The mspid of the creator: " + stub.getCreator().mspid + "\n";
+        returnStatement += "The mspid of the peer that is executing: " + stub.getMspID() + "\n";
+        const Cid = new ClientIdentity(stub);
+        returnStatement += "The Client Identity of who is asking for this function: " + Cid.getMSPID()
+        + " " + Cid.getAttributeValue("*") + "\n";
+        Chaincode.logger.debug(returnStatement);
+        return Shim.success();
     }
 }
 
