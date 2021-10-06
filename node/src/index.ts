@@ -350,17 +350,17 @@ class Chaincode {
         return Shim.success(Avalbytes);
     }
 
-    async showIdentity(stub: ChaincodeStub): Promise<ChaincodeResponse> {
-        // the purpose here is to show what the identities are within minifabric 
-        let returnStatement = "";
-        returnStatement += "The mspid of the creator: " + stub.getCreator().mspid + "\n";
-        returnStatement += "The mspid of the peer that is executing: " + stub.getMspID() + "\n";
-        const Cid = new ClientIdentity(stub);
-        returnStatement += "The Client Identity of who is asking for this function: " + Cid.getMSPID()
-        + " " + Cid.getAttributeValue("*") + "\n";
-        Chaincode.logger.debug(returnStatement);
-        return Shim.success();
-    }
+    // async showIdentity(stub: ChaincodeStub): Promise<ChaincodeResponse> {
+    //     // the purpose here is to show what the identities are within minifabric 
+    //     let returnStatement = "";
+    //     returnStatement += "The mspid of the creator: " + stub.getCreator().mspid + "\n";
+    //     returnStatement += "The mspid of the peer that is executing: " + stub.getMspID() + "\n";
+    //     const Cid = new ClientIdentity(stub);
+    //     returnStatement += "The Client Identity of who is asking for this function: " + Cid.getMSPID()
+    //     + " " + Cid.getAttributeValue("*") + "\n";
+    //     Chaincode.logger.debug(returnStatement);
+    //     return Shim.success();
+    // }
 }
 
 Shim.start(new Chaincode());

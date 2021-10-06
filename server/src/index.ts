@@ -2,7 +2,7 @@ import express from "express";
 import type { Request, Response } from "express";
 import path from "path";
 import fs from "fs";
-import { Identity, Wallet, Wallets } from "fabric-network";
+import { Identity, Wallet, Wallets, Gateway } from "fabric-network";
 import fabricCAClient from "fabric-ca-client";
 import { IdentityContext } from "fabric-common";
 import config from "../config/config.json";
@@ -12,10 +12,6 @@ import { randomUUID } from "crypto";
 const walletPath = path.join(__dirname, "..", "wallet");
 
 let app = express();
-
-async function createDefaultAffiliation() {
-
-}
 
 async function createAdminWallet(
     fabricCaClient: fabricCAClient,
@@ -75,6 +71,12 @@ app.get("/", async (req: Request, res: Response) => {
             config.adminUsername
         );
 
+        if (!(await fabricCaClient.newAffiliationService().getOne("department1", adminUserContext)).success)
+        {
+            console.log("Creating affiliation");
+            await fabricCaClient.newAffiliationService().create({name: "department1"}, adminUserContext);
+        }
+
         try {
             await fabricCaClient.register(
                 {
@@ -108,11 +110,41 @@ app.get("/", async (req: Request, res: Response) => {
         }
     }
     console.log("user " + userName + " created!");
-    res.json({result: "success"});
+    res.json({ result: "success" });
+});
+
+app.get("/getBalance", async (req: Request, res: Response) => {
+    
+    const walletsDir = await Wallets.newFileSystemWallet(walletPath);
+    const user = await walletsDir.get("70175d17-4d6e-4be4-b808-87234aa15613");
+    console.log(user);
+
+    if (user) {
+        console.log("found user");
+        const gateway = new Gateway();
+        await gateway.connect(channelConnection, {
+            wallet: walletsDir,
+            identity: user,
+            discovery: config.gatewayDiscovery,
+        });
+        console.log("found user1");
+
+        const network = await gateway.getNetwork("mainchannel");
+        const contract = network.getContract("mycc");
+        const getBalanceTransaction = contract.createTransaction("getBalance");
+        console.log("found user2");
+
+        const balance = await getBalanceTransaction.submit("mec-example-com");
+        res.json(balance);
+    } else {
+        res.sendStatus(403);
+    }
+    // res.json({ result: "success" });
 });
 
 app.listen(2222, function () {
     console.warn(
-        "Example app listening on port 2222! Dude go to http://localhost:2222/"
+        "Setup and create new identity at http://localhost:2222/ \n" +
+        "Send tokens with bob at http://localhost:2222/getBalance"
     );
 });
