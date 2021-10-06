@@ -8,5 +8,6 @@ notes.txt
 *.log
 /testingFolder
 explorer/
+*/dist
 # except
 # !

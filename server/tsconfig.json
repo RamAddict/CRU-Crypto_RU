@@ -8,7 +8,7 @@
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "moduleResolution": "Node",
-        "outDir": "dist/",
+        "outDir": "dist",
         "module": "CommonJS",
         "resolveJsonModule": true
     },

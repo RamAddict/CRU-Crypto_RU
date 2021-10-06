@@ -2,6 +2,6 @@
     "adminUsername": "admin",
     "adminSecret": "adminpw",
     "orgMSPID": "mec-example-com",
-    "defaultAffiliation": "mec.department1",
+    "defaultAffiliation": "department1",
     "gatewayDiscovery": { "enabled": true, "asLocalhost": true }
 }

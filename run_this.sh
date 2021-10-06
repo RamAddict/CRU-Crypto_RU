@@ -1,6 +1,6 @@
 cd /home/arthur/CRU
 minifab cleanup -o mec.example.com 
-minifab up -o mec.example.com -y 'OutOf(2, "mec-example-com.member", "student-example-com.member", "ufsc-example-com.member")'  -n mycc -l node
+minifab up -e true -c mainchannel -o mec.example.com -y 'OutOf(2, "mec-example-com.member", "student-example-com.member", "ufsc-example-com.member")'  -n mycc -l node
 # blows up with minifab up for some reason
 minifab create -c mainchannel
 minifab join,channelquery,channelsign
