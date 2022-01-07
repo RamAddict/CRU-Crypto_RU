@@ -22,11 +22,14 @@ fi
 
 cd node
 
-if [ -x "$(command -v docker)" ]; then
+if [ -x "$(command -v npm)" ]; then
     echo "Already has npm, Great!"
 else
     # install npm
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+    source ~/.bashrc
+    nvm install --lts
+    nvm use --lts
 fi
 
 if [ -x "$(command -v pnpm)" ]; then
