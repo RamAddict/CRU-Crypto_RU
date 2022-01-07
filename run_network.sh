@@ -1,9 +1,12 @@
-cd /home/arthur/CRU
-minifab cleanup -o mec.example.com 
-minifab up -e true -c mainchannel -o mec.example.com -y 'OutOf(2, "mec-example-com.member", "student-example-com.member", "ufsc-example-com.member")'  -n mycc -l node
+cd ~/CRU
+echo "here we go!"
+./minifab cleanup -o mec.example.com 
+./minifab up -e true -c mainchannel -o mec.example.com -y 'OutOf(2, "mec-example-com.member", "student-example-com.member", "ufsc-example-com.member")'  -n mycc -l node
 # blows up with minifab up for some reason
-minifab create -c mainchannel
-minifab join,channelquery,channelsign
+echo "Creating mainchannel"
+./minifab create -c mainchannel
+echo "joining and singing"
+./minifab join,channelquery,channelsign
 # read -p "continue?"
 echo "Done setting up docker and channel"
 
@@ -15,9 +18,10 @@ cd ../../
 
 echo -e "\n\nbuilt code, will try to install it now\n\n"
 
-minifab install -n mycc -l node
-minifab approve,commit,initialize -p '"init"'
-minifab discover, explorerup
+./minifab install -n mycc -l node
+./minifab approve,commit,initialize -p '"init"'
+./minifab discover
+./minifab explorerup
 # minifab invoke -p  '"query", "a"'
 
 # minifab install,approve,commit,initialize -n mycc -v 1.1 -p '"init", "a", "200"'

@@ -11,3 +11,5 @@ explorer/
 */dist
 # except
 # !
+test.sh
+get-docker.sh

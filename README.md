@@ -8,3 +8,16 @@ A principal funcionalidade de qualquer aplicação financeira é o envio de recu
 
 ## Telas da aplicação
 Para realizar a modelagem preliminar da aplicação web utilizamos a ferramenta figma. A seguir o liame à modelagem desenvolvida, com dois tamanhos de janela para da uma das telas propostas: https://www.figma.com/file/iLeOZas2U7iNjRn2tN52z9/CRU?node-id=5%3A65
+
+
+# Installation
+Clone this repository on your HOME (```~/CRU```)
+
+
+run <br>
+    `bash install_everything.sh` <br>
+then <br>
+    `bash run_network.sh` <br>
+
+# Dependencies
+This project requires minifabric, node and docker. The install_everything script will download and install everything for you.
