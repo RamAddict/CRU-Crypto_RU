@@ -70,8 +70,15 @@ app.get("/", async (req: Request, res: Response) => {
             adminId,
             config.adminUsername
         );
-
-        if (!(await fabricCaClient.newAffiliationService().getOne("department1", adminUserContext)).success)
+        
+        let hasAffiliationService = false;
+        try {
+            (await fabricCaClient.newAffiliationService().getOne("department1", adminUserContext)).success
+        } catch (e) {
+            console.log(e)
+            hasAffiliationService = true;
+        }
+        if (hasAffiliationService)
         {
             console.log("Creating affiliation");
             await fabricCaClient.newAffiliationService().create({name: "department1"}, adminUserContext);
@@ -114,9 +121,9 @@ app.get("/", async (req: Request, res: Response) => {
 });
 
 app.get("/getBalance", async (req: Request, res: Response) => {
-    
+
     const walletsDir = await Wallets.newFileSystemWallet(walletPath);
-    const user = await walletsDir.get("70175d17-4d6e-4be4-b808-87234aa15613");
+    const user = await walletsDir.get("13347047-b461-4790-a7ca-8604f58cf169");
     console.log(user);
 
     if (user) {
@@ -135,7 +142,7 @@ app.get("/getBalance", async (req: Request, res: Response) => {
         console.log("found user2");
 
         const balance = await getBalanceTransaction.submit("mec-example-com");
-        res.json(balance);
+        res.json(balance.toString());
     } else {
         res.sendStatus(403);
     }

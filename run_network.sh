@@ -1,3 +1,5 @@
+#!/bin/bash
+
 cd ~/CRU
 echo "here we go!"
 ./minifab cleanup -o mec.example.com 

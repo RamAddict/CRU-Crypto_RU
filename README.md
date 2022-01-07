@@ -13,11 +13,14 @@ Para realizar a modelagem preliminar da aplicação web utilizamos a ferramenta 
 # Installation
 Clone this repository on your HOME (```~/CRU```)
 
+Make sure you are on the root of the project, then:
 
 run <br>
     `bash install_everything.sh` <br>
 then <br>
     `bash run_network.sh` <br>
+then <br>
+    `bash start_server.sh` <br>
 
 # Dependencies
 This project requires minifabric, node and docker. The install_everything script will download and install everything for you.
