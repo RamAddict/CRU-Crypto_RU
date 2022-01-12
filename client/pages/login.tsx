@@ -7,23 +7,27 @@ const Home: NextPage = () => {
     return (
         <>
             <Head>
-                <title>CRU</title>
+                <title>CRU - Login</title>
             </Head>
-            <div className="h-screen bg-gradient-to-b from-[#2B0245] via-[#2B0245] to-[#FEB93F] flex flex-col justify-between">
+            <div className="h-screen bg-gradient-to-b from-[#2B0245] via-[#2B0245] to-[#FEB93F] flex flex-col">
                 {/* <header></header> */}
-                <main className="md:flex md:flex-grow md:justify-center">
+                <main className=" flex flex-col my-auto">
                     <img
                         src="/cru.png"
                         alt="cru"
-                        className="mx-auto md:my-auto md:mr-80"
+                        className="mx-auto md:my-auto"
                     />
+
                     <form
                         onSubmit={(event) => {
                             event.preventDefault();
                             console.log(form);
                         }}
-                        className="max-w-full px-10 space-y-10 md:max-w-xl mx-auto md:my-auto md:ml-0"
+                        className="max-w-full px-10 space-y-10 md:max-w-xl mx-auto md:my-auto"
                     >
+                    <p className="text-white block text-center mx-auto my-auto">
+                    Welcome, please sign in or create an account
+                    </p>
                         {["Matrícula", "Senha"].map((field: string) => (
                             <fieldset className="flex justify-between">
                                 <label className="text-white block text-center text-2xl my-auto mr-auto">
@@ -46,12 +50,18 @@ const Home: NextPage = () => {
                             className="w-full text-center bg-[#FEB93F] py-3 rounded-xl text-lg drop-shadow-md"
                             type="submit"
                         >
-                            login
+                            Login
                         </button>
+                        <p className="text-white block text-center mx-auto my-auto hover:underline">
+                            <a href="/register">
+                                 Create account
+                            </a>
+                        </p>
                     </form>
+
                 </main>
                 <footer className="py-2 text-center  text-white font-bolder flex justify-center content-center">
-                    <span className="block my-auto">Copyleft 🐀</span>
+                    <span className="block my-auto ml-auto mr-auto md:flex-grow">Copyleft 🐀</span>
                 </footer>
             </div>
         </>

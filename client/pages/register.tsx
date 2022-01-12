@@ -7,7 +7,7 @@ const Home: NextPage = () => {
     return (
         <>
             <Head>
-                <title>CRU</title>
+                <title>CRU - Cadastro</title>
             </Head>
             <div className="h-screen bg-gradient-to-b from-[#2B0245] via-[#2B0245] to-[#FEB93F] flex flex-col justify-between">
                 {/* <header></header> */}
