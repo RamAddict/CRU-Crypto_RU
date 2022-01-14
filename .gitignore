@@ -9,6 +9,7 @@ notes.txt
 /testingFolder
 explorer/
 */dist
+/server/wallet
 # except
 # !
 test.sh

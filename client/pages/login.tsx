@@ -2,7 +2,7 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
 
-const Home: NextPage = () => {
+const Login: NextPage = () => {
     const [form, setForm] = useState<Record<string, string>>({ Matrícula: "", Senha: "" });
     return (
         <>
@@ -18,7 +18,7 @@ const Home: NextPage = () => {
                         className="mx-auto md:my-auto md:mr-80"
                     />
                     <form
-                        onSubmit={(event) => {
+                        onSubmit={(event) => {  
                             event.preventDefault();
                             console.log(form);
                         }}
@@ -58,4 +58,4 @@ const Home: NextPage = () => {
     );
 };
 
-export default Home;
+export default Login;
