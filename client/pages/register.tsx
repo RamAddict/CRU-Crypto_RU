@@ -33,8 +33,10 @@ const Register: NextPage = () => {
                             event.preventDefault();
                             console.log(form);
                             try {
-                                const res = await axios.post(config.server, form);
+                                const res = await axios.post(config.server += "/register", form);
                                 // redirect 
+                                console.log(res.data["token"])
+                                // console.log(res.headers)
                             } catch (e) {
                                 if (axios.isAxiosError(e)) {
                                     setError(`Encountered following error: ${(e.response?.data["result"] as string)}`);

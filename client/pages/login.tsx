@@ -1,9 +1,14 @@
+import axios from "axios";
 import type { NextPage } from "next";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useState } from "react";
+import config from "../config/config.json";
 
 const Login: NextPage = () => {
+    const router = useRouter();
     const [form, setForm] = useState<Record<string, string>>({ Matrícula: "", Senha: "" });
+    const [error, setError] = useState<string>();
     return (
         <>
             <Head>
@@ -19,9 +24,22 @@ const Login: NextPage = () => {
                     />
 
                     <form
-                        onSubmit={(event) => {  
+                        onSubmit={async (event) => {  
                             event.preventDefault();
                             console.log(form);
+                            try {
+                                const res = await axios.post(config.server + "/login", form);
+                                const token = res.data["token"];
+                                window.localStorage.setItem("token", token);
+                                // redirect 
+                                router.push("/");
+                                console.log(res.data["token"]);
+                                
+                            } catch (e) {
+                                if (axios.isAxiosError(e)) {
+                                    setError(`Encountered following error: ${(e.response?.data["result"] as string)}`);
+                                }
+                            }
                         }}
                         className="max-w-full px-10 space-y-10 md:max-w-xl mx-auto md:my-auto"
                     >
@@ -29,7 +47,7 @@ const Login: NextPage = () => {
                     Welcome, please sign in or create an account
                     </p>
                         {["Matrícula", "Senha"].map((field: string) => (
-                            <fieldset className="flex justify-between">
+                            <fieldset key={field} className="flex justify-between">
                                 <label className="text-white block text-center text-2xl my-auto mr-auto">
                                     {field}
                                 </label>
@@ -46,6 +64,7 @@ const Login: NextPage = () => {
                                 />
                             </fieldset>
                         ))}
+                        {error? (<p className="text-white font-bolder">{error}</p>) : null}
                         <button
                             className="w-full text-center bg-[#FEB93F] py-3 rounded-xl text-lg drop-shadow-md"
                             type="submit"

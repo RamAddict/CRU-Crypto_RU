@@ -1,24 +1,53 @@
+import axios, { AxiosResponse } from "axios";
 import type { NextPage, NextApiRequest, NextApiResponse } from "next";
 import Head from "next/head";
-import { useState } from "react";
+import { useRouter } from "next/router";
+import config from "../config/config.json";
+import { useEffect, useState } from "react";
 
-export const getServerSideProps = (async function ({ req, res }: {req: NextApiRequest, res: NextApiResponse}) {
-    if (!req.headers.authorization) {
-      return {
-        redirect: {
-          destination: '/login',
-          permanent: false,
-        },
-      }
-    } else {
-        return {
-          props: { user: req.query.user },
+// export const getServerSideProps = (async function ({ req, res }: {req: NextApiRequest, res: NextApiResponse}) {
+//     if (!req.headers.authorization) {
+//       return {
+//         redirect: {
+//           destination: '/login',
+//           permanent: false,
+//         },
+//       }
+//     } else {
+//         return {
+//           props: { user: req.query.user },
+//         }
+//     }
+
+//   })
+
+const Home: NextPage = () => {
+    const router = useRouter();
+    const [beneficiary, setBeneficiary] = useState<string | undefined>();
+    const [balance, setBalance] = useState<Number>(0);
+    useEffect(() => {
+        if (!window.localStorage.getItem("token")) {
+            router.push("/login");
+        } else {
+
+            axios
+            .get(config.server + "/me", {
+                headers: {
+                    Authorization:
+                    "Bearer " + window.localStorage.getItem("token"),
+                },
+            })
+            .then((res: AxiosResponse) => {
+                setBeneficiary(res.data.beneficiary);
+                setBalance(res.data.balance);
+                console.log(res);
+            })
+            .catch((e) => {
+                console.log(e);
+            });
         }
-    }
-  
-  })
-
-  const Home: NextPage = () => {
+    }, []);
+        
     return (
         <>
             <Head>
@@ -34,16 +63,9 @@ export const getServerSideProps = (async function ({ req, res }: {req: NextApiRe
                             className="mx-auto md:my-auto md:mr-80"
                         />
                         <div>
-                            <p>
-                                Bem vindo,
-                                nome_do_beneficiário
-                            </p>
-                            <p>
-                                Seu saldo é:
-                            </p>
-                            <p className="text-4xl">
-                                110.00 CRU
-                            </p>
+                            <p>Bem vindo, {beneficiary}</p>
+                            <p>Seu saldo é:</p>
+                            <p className="text-4xl">{balance.toFixed(2)} CRU</p>
                         </div>
                     </section>
                     <section className="space-y-4">
@@ -56,10 +78,27 @@ export const getServerSideProps = (async function ({ req, res }: {req: NextApiRe
                                 "Transferência",
                                 "Atualizar Cadastro",
                                 "Logout",
-                            ].map(label => (
+                            ].map((label) => (
                                 <button
+                                    key={label}
                                     className="text-center bg-[#FEB93F] py-8 rounded-xl text-lg drop-shadow-md"
                                     type="button"
+                                    onClick={(e) => {
+                                        switch (label) {
+                                            case "Histórico":
+                                                break;
+                                            case "Transferência":
+                                                break;
+                                            case "Atualizar Cadastro":
+                                                break;
+                                            case "Logout":
+                                                window.localStorage.removeItem(
+                                                    "token"
+                                                );
+                                                router.push("/login");
+                                                break;
+                                        }
+                                    }}
                                 >
                                     {label}
                                 </button>

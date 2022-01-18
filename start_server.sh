@@ -4,5 +4,5 @@
 
 cd server
 pnpm i
-pnpm start
+pnpm run dev
 cd ..
