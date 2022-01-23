@@ -14,7 +14,7 @@ specifiers:
   express: ^4.17.2
   fabric-ca-client: ^2.2.11
   fabric-common: ^2.2.11
-  fabric-network: ^2.2.11
+  fabric-network: 2.2.9
   jsonwebtoken: ^8.5.1
   nodemon: ^2.0.15
   npm-run-all: ^4.1.5
@@ -31,7 +31,7 @@ dependencies:
   express: 4.17.2
   fabric-ca-client: 2.2.11
   fabric-common: 2.2.11
-  fabric-network: 2.2.11
+  fabric-network: 2.2.9
   jsonwebtoken: 8.5.1
   nodemon: 2.0.15
   passport-jwt: 4.0.0
@@ -1047,12 +1047,31 @@ packages:
       pkcs11js: 1.2.6
     dev: false
 
-  /fabric-network/2.2.11:
-    resolution: {integrity: sha512-YikiBMK0O9Ve+5vZkEOkiz/eXCBzJFh0Ik9MigpjRam86E64NOpNzjMZbCfeas91+O5HPJrO5+zfjEHw7vWsIg==}
+  /fabric-common/2.2.9:
+    resolution: {integrity: sha512-uWR8PDDbs7EZaqtEqueFttJd2GXgnFWfo9Mbt+PxIJQlTMLaxFzHgvxpc3dzmy4FTTDTiXU8DrGsisAuBpr9Bw==}
     engines: {node: ^10.15.3 || ^12.13.1 || ^14.13.1, npm: ^6.4.1}
     dependencies:
-      fabric-common: 2.2.11
-      fabric-protos: 2.2.11
+      callsite: 1.0.0
+      elliptic: 6.5.4
+      fabric-protos: 2.2.9
+      js-sha3: 0.8.0
+      jsrsasign: 8.0.24
+      long: 4.0.0
+      nconf: 0.11.3
+      promise-settle: 0.3.0
+      sjcl: 1.0.8
+      winston: 2.4.5
+      yn: 4.0.0
+    optionalDependencies:
+      pkcs11js: 1.2.6
+    dev: false
+
+  /fabric-network/2.2.9:
+    resolution: {integrity: sha512-SnWxDAqdMPWOP0vaTFjns3FUK7QevhmL91ip48P7mJfCW8mx5ptajoyQ8iH/oVQvVtOWV43XUB1QZtfdA6NHmQ==}
+    engines: {node: ^10.15.3 || ^12.13.1 || ^14.13.1, npm: ^6.4.1}
+    dependencies:
+      fabric-common: 2.2.9
+      fabric-protos: 2.2.9
       long: 4.0.0
       nano: 9.0.5
     transitivePeerDependencies:
@@ -1061,6 +1080,15 @@ packages:
 
   /fabric-protos/2.2.11:
     resolution: {integrity: sha512-haWUubqMLccIyBdmhx4ueKCe7rJgr/zln7iDF+BM7Im48K/a76VmWdddm+QGgWI0Bbk1RA1KfLOdwdb/gSGiSg==}
+    engines: {node: ^10.15.3 || ^12.13.1 || ^14.13.1, npm: ^6.4.1}
+    dependencies:
+      '@grpc/grpc-js': 1.5.0
+      '@grpc/proto-loader': 0.6.9
+      protobufjs: 6.11.2
+    dev: false
+
+  /fabric-protos/2.2.9:
+    resolution: {integrity: sha512-OtBjWNsXNnfTGaHAlgn6Nqtj0dfvCiGd5sh3o2sY8HSO7tCJG9jV663zW4y6MpnZiOhjaVdwZ0iHIw0h+H6huA==}
     engines: {node: ^10.15.3 || ^12.13.1 || ^14.13.1, npm: ^6.4.1}
     dependencies:
       '@grpc/grpc-js': 1.5.0
@@ -1687,6 +1715,10 @@ packages:
 
   /jsrsasign/10.5.1:
     resolution: {integrity: sha512-yW0fq87KNZFw4Pn5ySllXs3ztZAROQZczEheKZTqmiNpCe/Xj9r5NhuAQ7MXTOyEZGJ/+MPHGTsfbgPFaLpwHQ==}
+    dev: false
+
+  /jsrsasign/8.0.24:
+    resolution: {integrity: sha512-u45jAyusqUpyGbFc2IbHoeE4rSkoBWQgLe/w99temHenX+GyCz4nflU5sjK7ajU1ffZTezl6le7u43Yjr/lkQg==}
     dev: false
 
   /jwa/1.4.1:

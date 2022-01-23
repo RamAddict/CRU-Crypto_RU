@@ -1,9 +1,11 @@
+/* eslint-disable @next/next/no-img-element */
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
 import config from "../config/config.json";
 import axios, { Axios } from "axios";
 import faker, { phone } from "faker";
+import { useRouter } from "next/router";
 
 const Register: NextPage = () => {
     const [error, setError] = useState<string>();
@@ -15,6 +17,8 @@ const Register: NextPage = () => {
         Senha: "",
         Telefone: "",
     });
+    const router = useRouter();
+
     return (
         <>
             <Head>
@@ -33,13 +37,22 @@ const Register: NextPage = () => {
                             event.preventDefault();
                             console.log(form);
                             try {
-                                const res = await axios.post(config.server += "/register", form);
-                                // redirect 
-                                console.log(res.data["token"])
-                                // console.log(res.headers)
+                                const res = await axios.post(
+                                    config.server + "/register",
+                                    form
+                                );
+                                const token = res.data["token"];
+                                window.localStorage.setItem("token", token);
+                                // redirect
+                                router.push("/");
+                                console.log(res.data["token"]);
                             } catch (e) {
                                 if (axios.isAxiosError(e)) {
-                                    setError(`Encountered following error: ${(e.response?.data["result"] as string)}`);
+                                    setError(
+                                        `Encountered following error: ${
+                                            e.response?.data["result"] as string
+                                        }`
+                                    );
                                 }
                             }
                         }}
@@ -61,6 +74,7 @@ const Register: NextPage = () => {
                                     {field}
                                 </label>
                                 <input
+                                    required
                                     value={form[field]}
                                     onChange={(e) =>
                                         setForm({
@@ -79,7 +93,9 @@ const Register: NextPage = () => {
                                 />
                             </fieldset>
                         ))}
-                        {error? (<p className="text-white font-bolder">{error}</p>) : null}
+                        {error ? (
+                            <p className="text-white font-bolder">{error}</p>
+                        ) : null}
                         <button
                             className="w-full text-center bg-[#FEB93F] py-3 rounded-xl text-lg drop-shadow-md"
                             type="button"
@@ -88,7 +104,9 @@ const Register: NextPage = () => {
                                 setForm({
                                     Nome: faker.name.findName(),
                                     CPF: faker.address.zipCode(),
-                                    Matrícula: faker.datatype.number().toString(),
+                                    Matrícula: faker.datatype
+                                        .number()
+                                        .toString(),
                                     "E-mail": faker.internet.email(),
                                     Senha: faker.internet.password(),
                                     Telefone: faker.phone.phoneNumber(),

@@ -31,7 +31,7 @@
     "express": "^4.17.2",
     "fabric-ca-client": "^2.2.11",
     "fabric-common": "^2.2.11",
-    "fabric-network": "^2.2.11",
+    "fabric-network": "2.2.9",
     "jsonwebtoken": "^8.5.1",
     "nodemon": "^2.0.15",
     "passport-jwt": "^4.0.0",

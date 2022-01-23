@@ -29,3 +29,12 @@ export async function openDb () {
     })
 }
 
+export async function getUserFromId(walletId: string): Promise<UserRow | undefined>
+{
+    return await openDb().then((db) =>
+    db.get<UserRow>(
+        `SELECT * FROM users WHERE walletId = ?`,
+        walletId
+    ));
+}
+
