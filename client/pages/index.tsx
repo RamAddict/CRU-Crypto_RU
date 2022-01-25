@@ -44,6 +44,8 @@ const Home: NextPage = () => {
                 })
                 .catch((e) => {
                     console.log(e);
+                    if (e.response?.data["result"] === "expired")
+                        router.push("/login");
                 });
         }
     }, [router]);
@@ -60,7 +62,7 @@ const Home: NextPage = () => {
                         <img
                             src="/cru.png"
                             alt="cru"
-                            className="mx-auto md:my-auto md:mr-80"
+                            className="mx-auto md:my-auto md:mr-80 shadow-md"
                         />
                         <div className="w-3/12">
                             <p>Bem vind@, {beneficiary}</p>
@@ -113,6 +115,7 @@ const Home: NextPage = () => {
                                             case "Histórico":
                                                 break;
                                             case "Transferência":
+                                                router.push("/transfer");
                                                 break;
                                             case "Atualizar Cadastro":
                                                 router.push("/update");

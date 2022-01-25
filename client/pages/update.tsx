@@ -36,7 +36,7 @@ const Update: NextPage = () => {
                     console.log(e);
                 });
         }
-    }, []);
+    }, [router]);
     return (
         <>
             <Head>
@@ -55,7 +55,7 @@ const Update: NextPage = () => {
                     <img
                         src="/cru.png"
                         alt="cru"
-                        className="mx-auto md:my-auto md:mr-80"
+                        className="mx-auto md:my-auto md:mr-80 shadow-md"
                     />
                     <form
                         onSubmit={async (event) => {

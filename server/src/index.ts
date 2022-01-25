@@ -69,9 +69,58 @@ router.post(
     }
 );
 
-router.get("/me", async (req: Request, res: Response) => {
+router.get("/transfer", async (req: Request, res: Response) => {
     const tokenData = verifyToken(req.headers.authorization as string);
     if (!tokenData) return res.status(403).json();
+    if (req.query.search === "true") {
+        const walletId = req.query.query;
+        const userRow = await openDb().then((db) =>
+            db.get<UserRow>(`SELECT * FROM users WHERE walletId = ?`, walletId)
+        );
+        if (userRow) return res.status(200).json({ result: "success" });
+        else return res.status(400).json();
+    }
+});
+
+router.post("/transfer", async (req: Request, res: Response) => {
+    const tokenData = verifyToken(req.headers.authorization as string);
+    if (!tokenData) return res.status(403).json();
+    console.log("transfer");
+    const walletId = tokenData.user.user;
+    const to = req.body.to;
+    const quantity = req.body.amount;
+    const walletsDir = await Wallets.newFileSystemWallet(walletPath);
+    const user = await walletsDir.get(walletId);
+    if (!user) return res.status(403).json();
+    const gateway = new Gateway();
+    await gateway.connect(channelConnection, {
+        wallet: walletsDir,
+        identity: user,
+        discovery: config.gatewayDiscovery,
+    });
+    const network = await gateway.getNetwork("mainchannel");
+    const contract = network.getContract("mycc");
+    const sendTokensTransaction = contract.createTransaction("sendTokens");
+    let resp;    
+    try {
+        resp = await sendTokensTransaction.submit(walletId, to, quantity);
+        console.log("repsonse: " + resp);
+    } catch (e: any) {
+        if ((e.responses[0].response.message as string).includes("funds"))
+            return res.status(500).json({ result: "Você não possui fundos suficientes" });
+        else if ((e.responses[0].response.message as string).includes("0.1"))
+            return res.status(500).json({ result: "Não permitido enviar menos que 0.1" });
+        else if ((e.responses[0].response.message as string).includes("same"))
+            return res.status(500).json({ result: "Não permitido enviar para si mesmo" });
+        else if ((e.responses[0].response.message as string).includes("parameters"))
+            return res.status(500).json({ result: "params" });
+    }
+    return res.status(200).json({ result: "success" });
+});
+
+router.get("/me", async (req: Request, res: Response) => {
+    const tokenData = verifyToken(req.headers.authorization as string);
+    if (!tokenData) return res.status(403).json({result: "expired"});
     if (req.query.includeProfile === "true") {
         console.log("update");
         const userRow = await openDb().then((db) =>
@@ -85,7 +134,7 @@ router.get("/me", async (req: Request, res: Response) => {
                 Nome: userRow?.name,
                 CPF: userRow?.ssn,
                 "E-mail": userRow?.email,
-                Senha: userRow?.pw,
+                Senha: "",
                 Telefone: userRow?.phone,
             },
         });
@@ -363,11 +412,17 @@ app.get("/getBalance/:walletId", async (req: Request, res: Response) => {
 
 function verifyToken(accessTokenHeader: string) {
     if (typeof accessTokenHeader !== "undefined") {
-        console.log(accessTokenHeader.split(" "));
         const token = accessTokenHeader.split(" ")[1];
-        const jwtData = jwt.verify(token, "SECRET_JWT_SIGN_TOKEN", {
-            complete: true,
-        });
+        let jwtData;
+        try {
+            jwtData = jwt.verify(token, "SECRET_JWT_SIGN_TOKEN", {
+                complete: true,
+            });
+        }
+        catch (e) {
+            console.log("expired or otherwise invalid token");
+            return false;
+        }
 
         return jwtData.payload as jwt.JwtPayload;
     } else {
@@ -403,7 +458,6 @@ async function authenticate(
 
 app.listen(2222, function () {
     console.warn(
-        "Setup and create new identity at http://localhost:2222/ \n" +
-            "Send tokens with bob at http://localhost:2222/getBalance/1d183e29-ccf2-4f27-b0b0-4cac6b9cd225"
+        "Setup and create new identity at http://localhost:2222/ \n" + " run client now"
     );
 });

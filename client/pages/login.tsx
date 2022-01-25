@@ -24,7 +24,7 @@ const Login: NextPage = () => {
                     <img
                         src="/cru.png"
                         alt="cru"
-                        className="mx-auto md:my-auto"
+                        className="mx-auto md:my-auto shadow-md"
                     />
 
                     <form

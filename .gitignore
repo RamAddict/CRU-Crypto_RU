@@ -10,6 +10,7 @@ notes.txt
 explorer/
 */dist
 /server/wallet
+/server/database/database.db
 # except
 # !
 test.sh

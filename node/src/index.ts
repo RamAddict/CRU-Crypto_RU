@@ -56,7 +56,7 @@ class Chaincode {
             // Create UTXOLIST
             let initialIssue = new Token(
                 await Chaincode.produceNextId(stub), 
-                MEC, 
+                "admin", 
                 new Date("2021-01-01"), 
                 new Date("2022-01-01"), 
                 1e6);
@@ -127,21 +127,37 @@ class Chaincode {
      * @param {string} to 
     */
     async sendTokens(stub: ChaincodeStub, from: string, to: string, quantity: number): Promise<ChaincodeResponse> {
-        // TODO
         // check whoever is sending can send tokens
         if (!from || !to || !quantity)
-            return Shim.error(Buffer.from("Incorrent number of parameters"));
+        {
+            let error = Shim.error(Buffer.from("Incorrect number of parameters"));
+            error.payload = Buffer.from(JSON.stringify({code: "params"}));
+            return error;
+        }
         if (from === to)
-            return Shim.error(Buffer.from("Not allowed to send tokens to same place"));
+        {
+            let error = Shim.error(Buffer.from("Not allowed to send tokens to same place"));
+            error.payload = Buffer.from(JSON.stringify({code: "same"}));
+            return error;
+        }
         if (quantity < 0.1)
-            return Shim.error(Buffer.from("Not allowed to send less than 0.1 tokens"));
+        {
+            let error = Shim.error(Buffer.from("Not allowed to send less than 0.1 tokens"));
+            error.payload = Buffer.from(JSON.stringify({code: "min"}));
+            return error;
+        }
+        quantity = Number.parseFloat(quantity.toFixed(1));
         // check balance
         let [tks, change] = await Chaincode.selectTksToSend(stub, from, quantity);
         Chaincode.logger.debug(JSON.stringify(tks));
         Chaincode.logger.debug(change);
         // if no tokens found, return error
         if (tks.length === 0)
-            return Shim.error(Buffer.from(from + " lacks funds"));
+        {
+            let error = Shim.error(Buffer.from(from + " lacks funds"))
+            error.payload = Buffer.from(JSON.stringify({code: "funds"}));
+            return error;
+        }
         
         let tokenList = (await Chaincode.getUTXOList(stub));
 
@@ -175,7 +191,9 @@ class Chaincode {
         // write this back on chaincode
         await stub.putState("UTXOLIST", tokenList.serialize());
 
-        return Shim.success(Buffer.from("Transferred " + quantity + " from " + from + " to " + to + " tokenId: " + tks[0].tokenId));
+        let ccresponse = Shim.success(Buffer.from("Transferred " + quantity + " from " + from + " to " + to + " tokenId: " + tks[0].tokenId));
+        ccresponse.payload = Buffer.from(JSON.stringify({code: "sucess"}));
+        return ccresponse;
     }
 
     static async selectTksToSend(stub: ChaincodeStub, owner: string, quantity: number): Promise<[Token[], number]> {
@@ -273,7 +291,7 @@ class Chaincode {
             // create token
             const token = new Token(
                 await Chaincode.produceNextId(stub),
-                MEC, // owner is hard-coded
+                "admin", // owner is hard-coded
                 issueDate,
                 maturityDate,
                 faceValue
