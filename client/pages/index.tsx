@@ -105,6 +105,7 @@ const Home: NextPage = () => {
                                 "Transferência",
                                 "Atualizar Cadastro",
                                 "Logout",
+                                // "Emitir",
                             ].map((label) => (
                                 <button
                                     key={label}
@@ -126,6 +127,9 @@ const Home: NextPage = () => {
                                                 );
                                                 router.push("/login");
                                                 break;
+                                            // case "Emitir":
+
+                                            // break;
                                         }
                                     }}
                                 >

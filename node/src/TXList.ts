@@ -5,10 +5,7 @@ export interface ITXList {
 }
 
 export class TXList implements ITXList {
-    
-    constructor(
-        txList: Token[]
-    ) {
+    constructor(txList: Token[]) {
         this.txList = txList;
     }
     // list of tokens
@@ -24,10 +21,12 @@ export class TXList implements ITXList {
     }
     /**
      * Creates a TXList object from a raw JSON object
-     * @param {ITXList} txList The object to rehydrate (typically the return of JSON.parse()) 
-     * @return {TXList} The hydrated list 
+     * @param {ITXList} txList The object to rehydrate (typically the return of JSON.parse())
+     * @return {TXList} The hydrated list
      */
     static hydrateFromJSON(txList: ITXList): TXList {
-        return new TXList(txList.txList.map((token) => Token.hydrateFromJSON(token)));
+        return new TXList(
+            txList.txList.map((token) => Token.hydrateFromJSON(token))
+        );
     }
 }

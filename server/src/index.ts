@@ -355,7 +355,8 @@ async function registerNewUser(
 app.post("/update", async (req: Request, res: Response) => {
     const tokenData = verifyToken(req.headers.authorization as string);
     if (tokenData) {
-        console.log("dude");
+        if (!req.body.Senha) return res.status(403).json();
+        console.log("update");
         await openDb().then((db) => {
             db.run(
                 `UPDATE users 
