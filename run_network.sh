@@ -10,15 +10,17 @@ npm install
 pnpm build
 cd ../../
 
-./minifab up -i 2.4.1 -e true -c mainchannel -o mec.example.com -n mycc -l node
-# -y 'OutOf(2, "mec-example-com.member", "student-example-com.member", "ufsc-example-com.member")'
+./minifab up -e true -i 2.4.1 -c mainchannel -o mec.example.com -n mycc -l node -y 'OutOf(2, "mec-example-com.member", "student-example-com.member", "ufsc-example-com.member")'
 # blows up with minifab up for some reason
 # echo "Creating mainchannel"
 # ./minifab create -c mainchannel
 # echo "joining and singing"
 # ./minifab join,channelquery,channelsign
 # read -p "continue?"
-./minifab channelquery, discover, explorerup
+sleep 3
+./minifab channelquery
+./minifab discover
+# ./minifab explorerup
 echo "Done setting up docker and channel"
 
 # echo -e "\n\nbuilt code, will try to install it now\n\n"

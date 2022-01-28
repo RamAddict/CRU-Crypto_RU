@@ -92,20 +92,20 @@ const Transfer: NextPage = () => {
                                 onClick={(e) => {
                                     e.preventDefault();
                                     axios
-                                        .get(
-                                            config.server +
-                                                "/transfer?search=true&query=" +
-                                                query,
-                                            {
-                                                headers: {
-                                                    Authorization:
-                                                        "Bearer " +
-                                                        window.localStorage.getItem(
-                                                            "token"
-                                                        ),
-                                                },
-                                            }
-                                        )
+                                        .get(config.server + "/transfer", {
+                                            headers: {
+                                                Authorization:
+                                                    "Bearer " +
+                                                    window.localStorage.getItem(
+                                                        "token"
+                                                    ),
+                                            },
+                                            // fix enconding issue
+                                            params: {
+                                                search: "true",
+                                                query: query,
+                                            },
+                                        })
                                         .then((res: AxiosResponse) => {
                                             setError1(
                                                 "✅ usuário válido encontrado!"
@@ -138,6 +138,7 @@ const Transfer: NextPage = () => {
                                 }}
                                 required
                                 type={"number"}
+                                step={0.1}
                                 className="w-3/12 rounded-xl h-10 ml-4"
                             ></input>
                         </div>

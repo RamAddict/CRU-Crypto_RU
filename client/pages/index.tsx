@@ -6,22 +6,6 @@ import { useRouter } from "next/router";
 import config from "../config/config.json";
 import { useEffect, useState } from "react";
 
-// export const getServerSideProps = (async function ({ req, res }: {req: NextApiRequest, res: NextApiResponse}) {
-//     if (!req.headers.authorization) {
-//       return {
-//         redirect: {
-//           destination: '/login',
-//           permanent: false,
-//         },
-//       }
-//     } else {
-//         return {
-//           props: { user: req.query.user },
-//         }
-//     }
-
-//   })
-
 const Home: NextPage = () => {
     const router = useRouter();
     const [beneficiary, setBeneficiary] = useState<string | undefined>();
@@ -56,7 +40,7 @@ const Home: NextPage = () => {
                 <title>CRU</title>
             </Head>
             <div className="h-screen bg-gradient-to-b from-[#2B0245] via-[#2B0245] to-[#FEB93F] flex flex-col justify-between">
-                {/* <header></header> */}
+                <header className="md:py-10"></header>
                 <main className="md:flex-grow flex-col my-auto">
                     <section className="text-white text-center mx-auto my-auto flex flex-grow">
                         <img
@@ -64,7 +48,7 @@ const Home: NextPage = () => {
                             alt="cru"
                             className="mx-auto md:my-auto md:mr-80 shadow-md"
                         />
-                        <div className="w-3/12">
+                        <div className="w-3/12 md:py-10 md:pr-10">
                             <p>Bem vind@, {beneficiary}</p>
                             <p>Seu saldo é:</p>
                             <p className="text-4xl">
@@ -114,6 +98,7 @@ const Home: NextPage = () => {
                                     onClick={(e) => {
                                         switch (label) {
                                             case "Histórico":
+                                                router.push("/history");
                                                 break;
                                             case "Transferência":
                                                 router.push("/transfer");

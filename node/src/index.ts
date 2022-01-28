@@ -155,8 +155,11 @@ class Chaincode {
         stub: ChaincodeStub,
         from: string,
         to: string,
-        quantity: number
+        quantity: number,
+        date: string
     ): Promise<ChaincodeResponse> {
+        // from = from.toString()
+        // to = to.toString()
         // check whoever is sending can send tokens
         if (!from || !to || !quantity) {
             let error = Shim.error(Buffer.from("Incorrect number of parameters"));
@@ -237,7 +240,7 @@ class Chaincode {
         // save on the to and froms user history
         let fromHist = await Chaincode.getHistoryList(stub, from);
         let toHist = await Chaincode.getHistoryList(stub, to);
-        const now = new Date();
+        const now = new Date(date);
         const newTransaction = new Transaction(from, to, quantity, now);
         fromHist.history.push(newTransaction);
         toHist.history.push(newTransaction);
@@ -328,8 +331,7 @@ class Chaincode {
     ): Promise<TransactionHist> {
         if ((await stub.getState(user)).length === 0)
         {
-            this.logger.debug("performing if")
-            // await stub.putState(user, new TransactionHist([]).serialize())
+            this.logger.debug("creating fresh hist")
             return new TransactionHist([]);
         }
         return TransactionHist.hydrateFromJSON(
@@ -346,8 +348,10 @@ class Chaincode {
      * @param {string} owner the identity
      * @Return the current c
      */
-    async getBalance(stub: ChaincodeStub, owner: string): Promise<number> {
+    async getBalance(stub: ChaincodeStub, owner: string | Number): Promise<number> {
         // query the elements in the UTXOLIST
+        if (typeof(owner) === "number")
+            owner = owner.toString();
         let accum = 0;
         (await Chaincode.getUTXOList(stub)).txList.forEach((token) => {
             if (token.owner === owner) accum += token.faceValue;
@@ -474,9 +478,9 @@ class Chaincode {
 
     async getUserHist(
         stub: ChaincodeStub,
-        user: string
+        user: Number
     ): Promise<ChaincodeResponse> {
-        return Shim.success((await Chaincode.getHistoryList(stub, user)).serialize());
+        return Shim.success((await Chaincode.getHistoryList(stub, user.toString())).serialize());
     }
     // async showIdentity(stub: ChaincodeStub): Promise<ChaincodeResponse> {
     //     // the purpose here is to show what the identities are within minifabric

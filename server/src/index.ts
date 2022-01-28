@@ -62,7 +62,7 @@ router.post(
         console.log("log in attempt" + req.body.Matrícula + req.body.Senha);
         const authenticated = await authenticate(req, res);
         if (authenticated) {
-            const token = await generateToken(req.body.Matrícula);
+            const token = await generateToken(req.body.Matrícula === "admin" ? req.body.Matrícula : req.body.Matrícula + "_");
             res.status(200).json({ result: "success", token: token });
         }
         // if not authenticated, authenticate will send the error
@@ -73,10 +73,12 @@ router.get("/transfer", async (req: Request, res: Response) => {
     const tokenData = verifyToken(req.headers.authorization as string);
     if (!tokenData) return res.status(403).json();
     if (req.query.search === "true") {
-        const walletId = req.query.query;
+        const walletId = req.query.query === "admin" ? req.query.query : req.query.query + "_";
+        console.log(walletId);
         const userRow = await openDb().then((db) =>
             db.get<UserRow>(`SELECT * FROM users WHERE walletId = ?`, walletId)
         );
+        console.log(userRow);
         if (userRow) return res.status(200).json({ result: "success" });
         else return res.status(400).json();
     }
@@ -85,9 +87,8 @@ router.get("/transfer", async (req: Request, res: Response) => {
 router.post("/transfer", async (req: Request, res: Response) => {
     const tokenData = verifyToken(req.headers.authorization as string);
     if (!tokenData) return res.status(403).json();
-    console.log("transfer");
     const walletId = tokenData.user.user;
-    const to = req.body.to;
+    const to = req.body.to === "admin" ? req.body.to : req.body.to + "_";
     const quantity = req.body.amount;
     const walletsDir = await Wallets.newFileSystemWallet(walletPath);
     const user = await walletsDir.get(walletId);
@@ -101,10 +102,11 @@ router.post("/transfer", async (req: Request, res: Response) => {
     const network = await gateway.getNetwork("mainchannel");
     const contract = network.getContract("mycc");
     const sendTokensTransaction = contract.createTransaction("sendTokens");
-    let resp;    
+    let resp;
+    const now = new Date().toString();
     try {
-        resp = await sendTokensTransaction.submit(walletId, to, quantity);
-        console.log("repsonse: " + resp);
+        resp = await sendTokensTransaction.submit(walletId, to, quantity, now);
+        console.log("response: " + resp);
     } catch (e: any) {
         if ((e.responses[0].response.message as string).includes("funds"))
             return res.status(500).json({ result: "Você não possui fundos suficientes" });
@@ -144,7 +146,7 @@ router.get("/me", async (req: Request, res: Response) => {
     const walletId = tokenData.user.user;
     const walletsDir = await Wallets.newFileSystemWallet(walletPath);
     const user = await walletsDir.get(walletId);
-    console.log("found user" + user?.mspId);
+    // console.log("found user" + user?.mspId);
     if (user) {
         const gateway = new Gateway();
         await gateway.connect(channelConnection, {
@@ -187,7 +189,6 @@ async function createAdminWallet(
     fabricCaClient: fabricCAClient,
     walletsDir: Wallet
 ) {
-    console.log("creating admin Identity");
     // enroll the username and password
     let adminEnrollment = await fabricCaClient.enroll({
         enrollmentID: config.adminUsername,
@@ -215,6 +216,8 @@ async function createAdminWallet(
             ""
         )
     );
+    console.log("creating admin Identity");
+
 }
 
 async function registerNewUser(
@@ -232,11 +235,12 @@ async function registerNewUser(
     >,
     res: Response
 ) {
+    const userName = req.body.Matrícula + "_";
     await openDb()
         .then((db) =>
             db.run(
                 "INSERT INTO users VALUES(?,?,?,?,?,?)",
-                req.body.Matrícula,
+                userName,
                 req.body.Nome,
                 req.body.CPF,
                 req.body["E-mail"],
@@ -249,7 +253,7 @@ async function registerNewUser(
             res.status(400).json({ result: "Error user exists" });
         });
 
-    const userName = req.body.Matrícula;
+    
     let userSecret = req.body.Senha;
     const userMSPID = "mec-example-com";
     const caURL =
@@ -352,6 +356,28 @@ async function registerNewUser(
     res.status(200).json({ result: "success", token: token });
 }
 
+app.get("/history", async (req: Request, res: Response) => {
+    const tokenData = verifyToken(req.headers.authorization as string);
+    if (!tokenData) return res.status(403).json();
+    console.log("history");
+    const walletId = tokenData.user.user;
+    
+    const walletsDir = await Wallets.newFileSystemWallet(walletPath);
+    const user = await walletsDir.get(walletId);
+    if (!user) return res.status(403).json();
+    const gateway = new Gateway();
+    await gateway.connect(channelConnection, {
+        wallet: walletsDir,
+        identity: user,
+        discovery: config.gatewayDiscovery,
+    });
+    const network = await gateway.getNetwork("mainchannel");
+    const contract = network.getContract("mycc");
+    const getUserHistTransaction = contract.createTransaction("getUserHist");
+    const userHist = JSON.parse((await getUserHistTransaction.submit(walletId)).toString());
+    return res.status(200).json({ result: "success", ...userHist});
+});
+
 app.post("/update", async (req: Request, res: Response) => {
     const tokenData = verifyToken(req.headers.authorization as string);
     if (tokenData) {
@@ -424,7 +450,7 @@ function verifyToken(accessTokenHeader: string) {
             console.log("expired or otherwise invalid token");
             return false;
         }
-
+        // (jwtData.payload as jwt.JwtPayload).user.user += "_";
         return jwtData.payload as jwt.JwtPayload;
     } else {
         return null;
@@ -446,7 +472,7 @@ async function authenticate(
     const userRow = await openDb().then((db) =>
         db.get<UserRow>(
             `SELECT * FROM users WHERE walletId = ?`,
-            req.body.Matrícula
+            req.body.Matrícula === "admin" ? req.body.Matrícula : req.body.Matrícula + "_"
         )
     );
     if (userRow && bcrypt.compareSync(req.body.Senha, userRow.pw)) {

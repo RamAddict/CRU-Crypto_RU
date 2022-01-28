@@ -54,7 +54,7 @@ const Login: NextPage = () => {
                         className="max-w-full px-10 space-y-10 md:max-w-xl mx-auto md:my-auto"
                     >
                         <p className="text-white block text-center mx-auto my-auto">
-                            Welcome, please sign in or create an account
+                            Bem vindo, cadastre-se ou faça login
                         </p>
                         {["Matrícula", "Senha"].map((field: string) => (
                             <fieldset
@@ -94,7 +94,7 @@ const Login: NextPage = () => {
                             Login
                         </button>
                         <p className="text-white block text-center mx-auto my-auto hover:underline">
-                            <a href="/register">Create account</a>
+                            <a href="/register">Cadastrar</a>
                         </p>
                     </form>
                     {/* <button
