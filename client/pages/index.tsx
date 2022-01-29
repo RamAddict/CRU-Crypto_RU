@@ -5,11 +5,13 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import config from "../config/config.json";
 import { useEffect, useState } from "react";
+import { roundToNearestMinutes } from "date-fns/esm";
 
 const Home: NextPage = () => {
     const router = useRouter();
     const [beneficiary, setBeneficiary] = useState<string | undefined>();
     const [balance, setBalance] = useState<Number | null>(null);
+    const showIssuebtn = true;
     useEffect(() => {
         if (!window.localStorage.getItem("token")) {
             router.push("/login");
@@ -89,7 +91,6 @@ const Home: NextPage = () => {
                                 "Transferência",
                                 "Atualizar Cadastro",
                                 "Logout",
-                                // "Emitir",
                             ].map((label) => (
                                 <button
                                     key={label}
@@ -112,15 +113,26 @@ const Home: NextPage = () => {
                                                 );
                                                 router.push("/login");
                                                 break;
-                                            // case "Emitir":
-
-                                            // break;
                                         }
                                     }}
                                 >
                                     {label}
                                 </button>
                             ))}
+                            {!showIssuebtn ? (
+                                <></>
+                            ) : (
+                                <button
+                                    key={"Emitir"}
+                                    className="text-center bg-[#FEB93F] py-8 rounded-xl text-lg drop-shadow-md"
+                                    type="button"
+                                    onClick={(e) => {
+                                        router.push("/issue");
+                                    }}
+                                >
+                                    Emitir
+                                </button>
+                            )}
                         </div>
                     </section>
                 </main>

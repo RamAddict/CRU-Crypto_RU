@@ -6,6 +6,7 @@ import { Wallet, Wallets, Gateway, X509Identity } from "fabric-network";
 import fabricCAClient from "fabric-ca-client";
 import { IdentityContext, User } from "fabric-common";
 import config from "../config/config.json";
+// @ts-ignore
 import channelConnection from "../../vars/profiles/mainchannel_connection_for_nodesdk.json";
 import { randomUUID } from "crypto";
 import cors from "cors";
@@ -160,7 +161,7 @@ router.get("/me", async (req: Request, res: Response) => {
         balance = (await getBalanceTransaction.submit(walletId)).toString();
     } else {
         console.error("oh no");
-        res.status(403).json("couldn't find wallet");
+        return res.status(403).json("couldn't find wallet");
     }
     const usr = await getUserFromId(walletId);
 
@@ -435,6 +436,35 @@ app.get("/getBalance/:walletId", async (req: Request, res: Response) => {
         res.sendStatus(403);
     }
     // res.json({ result: "success" });
+});
+
+app.post("/issue", async (req: Request, res: Response) => {
+    const tokenData = verifyToken(req.headers.authorization as string);
+    if (!tokenData) return res.status(403).json();
+    console.log("issue");
+    const walletId = tokenData.user.user;
+    if (walletId != "admin") {
+        return res.status(405).json();
+    }
+    const walletsDir = await Wallets.newFileSystemWallet(walletPath);
+    const user = await walletsDir.get(walletId);
+    if (!user) return res.status(403).json();
+    const gateway = new Gateway();
+    await gateway.connect(channelConnection, {
+        wallet: walletsDir,
+        identity: user,
+        discovery: config.gatewayDiscovery,
+    });
+    console.log(req.body)
+    const network = await gateway.getNetwork("mainchannel");
+    const contract = network.getContract("mycc");
+    const issueTransaction = contract.createTransaction("issue");
+    const issueDate = new Date()
+    const expireDate = new Date().setFullYear(issueDate.getFullYear()+1)
+    const issueing = JSON.parse((await issueTransaction.submit(issueDate.toString(),expireDate.toString(),)).toString());
+
+
+    return res.status(200).json({ result: "success", ...issueing});
 });
 
 function verifyToken(accessTokenHeader: string) {

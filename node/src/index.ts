@@ -368,13 +368,15 @@ class Chaincode {
      * @param {string} issueDate token issue date
      * @param {string} maturityDate token maturity date
      * @param {number} faceValue face value of token
+     * @param {string} date current date for history
      */
-    async issue(
+     async issue(
         stub: ChaincodeStub,
         // owner: string,
         issueDate: Date,
         maturityDate: Date,
-        faceValue: number
+        faceValue: number,
+        date: string
     ): Promise<Token> {
         // incorrect params
         if (!issueDate || !maturityDate || !faceValue) {
@@ -388,10 +390,11 @@ class Chaincode {
             throw new Error(
                 "Command issuer not Mec, and therefore not allowed to issue tokens"
             );
+        const adminId = "admin";
         // create token
         const token = new Token(
             await Chaincode.produceNextId(stub),
-            "admin", // owner is hard-coded
+            adminId, // owner is hard-coded
             issueDate,
             maturityDate,
             faceValue
@@ -402,6 +405,14 @@ class Chaincode {
         let UTXOLIST = await Chaincode.getUTXOList(stub);
         UTXOLIST.txList.push(token);
         await stub.putState("UTXOLIST", UTXOLIST.serialize());
+
+        // save on the to and froms user history
+        let adminHist = await Chaincode.getHistoryList(stub, adminId);
+        const now = new Date(date);
+        const newTransaction = new Transaction("Nova Emição", adminId, faceValue, now);
+        adminHist.history.push(newTransaction);
+
+        await stub.putState(adminId, adminHist.serialize());
         // return it
         return token;
     }
