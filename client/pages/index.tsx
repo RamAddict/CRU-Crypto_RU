@@ -1,17 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 import axios, { AxiosResponse } from "axios";
-import type { NextPage, NextApiRequest, NextApiResponse } from "next";
+import type { NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import config from "../config/config.json";
 import { useEffect, useState } from "react";
-import { roundToNearestMinutes } from "date-fns/esm";
 
 const Home: NextPage = () => {
     const router = useRouter();
     const [beneficiary, setBeneficiary] = useState<string | undefined>();
     const [balance, setBalance] = useState<Number | null>(null);
-    const showIssuebtn = true;
+    const [showIssuebtn, setShowIssueBtn] = useState<Boolean | null>(null);
     useEffect(() => {
         if (!window.localStorage.getItem("token")) {
             router.push("/login");
@@ -26,6 +25,7 @@ const Home: NextPage = () => {
                 .then((res: AxiosResponse) => {
                     setBeneficiary(res.data.beneficiary);
                     setBalance(res.data.balance);
+                    if (res.data.walletId === "admin") setShowIssueBtn(true);
                     console.log(res);
                 })
                 .catch((e) => {

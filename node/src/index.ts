@@ -375,8 +375,7 @@ class Chaincode {
         // owner: string,
         issueDate: Date,
         maturityDate: Date,
-        faceValue: number,
-        date: string
+        faceValue: number
     ): Promise<Token> {
         // incorrect params
         if (!issueDate || !maturityDate || !faceValue) {
@@ -408,7 +407,7 @@ class Chaincode {
 
         // save on the to and froms user history
         let adminHist = await Chaincode.getHistoryList(stub, adminId);
-        const now = new Date(date);
+        const now = issueDate;
         const newTransaction = new Transaction("Nova Emição", adminId, faceValue, now);
         adminHist.history.push(newTransaction);
 

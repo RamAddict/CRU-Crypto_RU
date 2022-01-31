@@ -3,10 +3,10 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import config from "../config/config.json";
-import axios, { Axios, AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 import { useRouter } from "next/router";
 
-const Transfer: NextPage = () => {
+const Issue: NextPage = () => {
     const [error1, setError1] = useState<string>();
     const [error2, setError2] = useState<string>();
     const [form, setForm] = useState<Number>();
@@ -39,22 +39,29 @@ const Transfer: NextPage = () => {
                     <form
                         onSubmit={async (event) => {
                             event.preventDefault();
-                            console.log(form);
                             if (!window.localStorage.getItem("token")) {
                                 router.push("/login");
                             }
                             axios
-                                .post(config.server + "/issue", form, {
-                                    headers: {
-                                        Authorization:
-                                            "Bearer " +
-                                            window.localStorage.getItem(
-                                                "token"
-                                            ),
-                                    },
-                                })
-                                .then((res: AxiosResponse) => {
+                                .post(
+                                    config.server + "/issue",
+                                    { amount: form },
+                                    {
+                                        headers: {
+                                            Authorization:
+                                                "Bearer " +
+                                                window.localStorage.getItem(
+                                                    "token"
+                                                ),
+                                        },
+                                    }
+                                )
+                                .then((_: AxiosResponse) => {
                                     setError2("✅ Tokens criados!");
+                                    setTimeout(
+                                        router.push.bind(null, "/"),
+                                        3000
+                                    );
                                 })
                                 .catch((e) => {
                                     console.log(e);
@@ -106,4 +113,4 @@ const Transfer: NextPage = () => {
     );
 };
 
-export default Transfer;
+export default Issue;

@@ -63,7 +63,11 @@ router.post(
         console.log("log in attempt" + req.body.Matrícula + req.body.Senha);
         const authenticated = await authenticate(req, res);
         if (authenticated) {
-            const token = await generateToken(req.body.Matrícula === "admin" ? req.body.Matrícula : req.body.Matrícula + "_");
+            const token = await generateToken(
+                req.body.Matrícula === "admin"
+                    ? req.body.Matrícula
+                    : req.body.Matrícula + "_"
+            );
             res.status(200).json({ result: "success", token: token });
         }
         // if not authenticated, authenticate will send the error
@@ -74,7 +78,10 @@ router.get("/transfer", async (req: Request, res: Response) => {
     const tokenData = verifyToken(req.headers.authorization as string);
     if (!tokenData) return res.status(403).json();
     if (req.query.search === "true") {
-        const walletId = req.query.query === "admin" ? req.query.query : req.query.query + "_";
+        const walletId =
+            req.query.query === "admin"
+                ? req.query.query
+                : req.query.query + "_";
         console.log(walletId);
         const userRow = await openDb().then((db) =>
             db.get<UserRow>(`SELECT * FROM users WHERE walletId = ?`, walletId)
@@ -110,12 +117,20 @@ router.post("/transfer", async (req: Request, res: Response) => {
         console.log("response: " + resp);
     } catch (e: any) {
         if ((e.responses[0].response.message as string).includes("funds"))
-            return res.status(500).json({ result: "Você não possui fundos suficientes" });
+            return res
+                .status(500)
+                .json({ result: "Você não possui fundos suficientes" });
         else if ((e.responses[0].response.message as string).includes("0.1"))
-            return res.status(500).json({ result: "Não permitido enviar menos que 0.1" });
+            return res
+                .status(500)
+                .json({ result: "Não permitido enviar menos que 0.1" });
         else if ((e.responses[0].response.message as string).includes("same"))
-            return res.status(500).json({ result: "Não permitido enviar para si mesmo" });
-        else if ((e.responses[0].response.message as string).includes("parameters"))
+            return res
+                .status(500)
+                .json({ result: "Não permitido enviar para si mesmo" });
+        else if (
+            (e.responses[0].response.message as string).includes("parameters")
+        )
             return res.status(500).json({ result: "params" });
     }
     return res.status(200).json({ result: "success" });
@@ -123,7 +138,7 @@ router.post("/transfer", async (req: Request, res: Response) => {
 
 router.get("/me", async (req: Request, res: Response) => {
     const tokenData = verifyToken(req.headers.authorization as string);
-    if (!tokenData) return res.status(403).json({result: "expired"});
+    if (!tokenData) return res.status(403).json({ result: "expired" });
     if (req.query.includeProfile === "true") {
         console.log("update");
         const userRow = await openDb().then((db) =>
@@ -168,6 +183,7 @@ router.get("/me", async (req: Request, res: Response) => {
     return res.status(200).json({
         beneficiary: usr?.name,
         balance: Number.parseFloat(balance),
+        walletId: walletId,
     });
 });
 
@@ -218,7 +234,6 @@ async function createAdminWallet(
         )
     );
     console.log("creating admin Identity");
-
 }
 
 async function registerNewUser(
@@ -254,7 +269,6 @@ async function registerNewUser(
             res.status(400).json({ result: "Error user exists" });
         });
 
-    
     let userSecret = req.body.Senha;
     const userMSPID = "mec-example-com";
     const caURL =
@@ -362,7 +376,7 @@ app.get("/history", async (req: Request, res: Response) => {
     if (!tokenData) return res.status(403).json();
     console.log("history");
     const walletId = tokenData.user.user;
-    
+
     const walletsDir = await Wallets.newFileSystemWallet(walletPath);
     const user = await walletsDir.get(walletId);
     if (!user) return res.status(403).json();
@@ -375,8 +389,10 @@ app.get("/history", async (req: Request, res: Response) => {
     const network = await gateway.getNetwork("mainchannel");
     const contract = network.getContract("mycc");
     const getUserHistTransaction = contract.createTransaction("getUserHist");
-    const userHist = JSON.parse((await getUserHistTransaction.submit(walletId)).toString());
-    return res.status(200).json({ result: "success", ...userHist});
+    const userHist = JSON.parse(
+        (await getUserHistTransaction.submit(walletId)).toString()
+    );
+    return res.status(200).json({ result: "success", ...userHist });
 });
 
 app.post("/update", async (req: Request, res: Response) => {
@@ -455,16 +471,23 @@ app.post("/issue", async (req: Request, res: Response) => {
         identity: user,
         discovery: config.gatewayDiscovery,
     });
-    console.log(req.body)
     const network = await gateway.getNetwork("mainchannel");
     const contract = network.getContract("mycc");
     const issueTransaction = contract.createTransaction("issue");
-    const issueDate = new Date()
-    const expireDate = new Date().setFullYear(issueDate.getFullYear()+1)
-    const issueing = JSON.parse((await issueTransaction.submit(issueDate.toString(),expireDate.toString(),)).toString());
+    const issueDate = new Date();
+    const expireDate = new Date().setFullYear(issueDate.getFullYear() + 1);
+    const faceValue = req.body.amount;
+    const issueing = JSON.parse(
+        (
+            await issueTransaction.submit(
+                issueDate.toString(),
+                expireDate.toString(),
+                faceValue
+            )
+        ).toString()
+    );
 
-
-    return res.status(200).json({ result: "success", ...issueing});
+    return res.status(200).json({ result: "success", ...issueing });
 });
 
 function verifyToken(accessTokenHeader: string) {
@@ -475,8 +498,7 @@ function verifyToken(accessTokenHeader: string) {
             jwtData = jwt.verify(token, "SECRET_JWT_SIGN_TOKEN", {
                 complete: true,
             });
-        }
-        catch (e) {
+        } catch (e) {
             console.log("expired or otherwise invalid token");
             return false;
         }
@@ -502,7 +524,9 @@ async function authenticate(
     const userRow = await openDb().then((db) =>
         db.get<UserRow>(
             `SELECT * FROM users WHERE walletId = ?`,
-            req.body.Matrícula === "admin" ? req.body.Matrícula : req.body.Matrícula + "_"
+            req.body.Matrícula === "admin"
+                ? req.body.Matrícula
+                : req.body.Matrícula + "_"
         )
     );
     if (userRow && bcrypt.compareSync(req.body.Senha, userRow.pw)) {
@@ -515,6 +539,7 @@ async function authenticate(
 
 app.listen(2222, function () {
     console.warn(
-        "Setup and create new identity at http://localhost:2222/ \n" + " run client now"
+        "Setup and create new identity at http://localhost:2222/ \n" +
+            " run client now"
     );
 });
