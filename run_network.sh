@@ -22,7 +22,7 @@ sleep 3
 ./minifab channelquery
 ./minifab discover
 ./minifab explorerup
-sleep 300 # 5 min
+sleep 30 # 30 seg
 echo "Done setting up docker and channel"
 
 # echo -e "\n\nbuilt code, will try to install it now\n\n"

@@ -42,6 +42,10 @@ const Issue: NextPage = () => {
                             if (!window.localStorage.getItem("token")) {
                                 router.push("/login");
                             }
+                            event.currentTarget.setAttribute(
+                                "disabled",
+                                "true"
+                            );
                             axios
                                 .post(
                                     config.server + "/issue",
@@ -70,6 +74,14 @@ const Issue: NextPage = () => {
                                             "Erro: " +
                                                 e.response?.data["result"]
                                         );
+                                })
+                                .finally(() => {
+                                    if (event.currentTarget !== null) {
+                                        event.currentTarget.setAttribute(
+                                            "disabled",
+                                            "false"
+                                        );
+                                    }
                                 });
                         }}
                     >
