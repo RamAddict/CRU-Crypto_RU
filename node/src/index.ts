@@ -1,7 +1,6 @@
 import {
     ChaincodeResponse,
     ChaincodeStub,
-    ClientIdentity,
     Shim,
 } from "fabric-shim";
 import { Token, ETState } from "./Token";
@@ -408,7 +407,7 @@ class Chaincode {
         // save on the to and froms user history
         let adminHist = await Chaincode.getHistoryList(stub, adminId);
         const now = issueDate;
-        const newTransaction = new Transaction("Nova Emição", adminId, faceValue, now);
+        const newTransaction = new Transaction("Nova Emissão", adminId, faceValue, now);
         adminHist.history.push(newTransaction);
 
         await stub.putState(adminId, adminHist.serialize());

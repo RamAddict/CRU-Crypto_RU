@@ -1,11 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 import axios, { AxiosResponse } from "axios";
-import type { NextPage, NextApiRequest, NextApiResponse } from "next";
+import type { NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import config from "../config/config.json";
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 const Home: NextPage = () => {
     const router = useRouter();
@@ -41,7 +41,7 @@ const Home: NextPage = () => {
             <Head>
                 <title>CRU</title>
             </Head>
-            <div className="h-screen bg-gradient-to-b from-[#2B0245] via-[#2B0245] to-[#FEB93F] flex flex-col justify-between">
+            <div className="min-h-screen bg-gradient-to-b from-[#2B0245] via-[#2B0245] to-[#FEB93F] flex flex-col justify-between">
                 <header className="z-10 absolute">
                     <img
                         src="/arrow-left-solid.svg"
@@ -78,8 +78,8 @@ const Home: NextPage = () => {
                                         >
                                             <span>
                                                 {format(
-                                                    new Date(transaction.date),
-                                                    "dd/MM/yyyy H:MM"
+                                                    parseISO(transaction.date),
+                                                    "dd/MM/yyyy H:mm"
                                                 )}
                                             </span>
                                             <span>

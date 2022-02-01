@@ -1,17 +1,15 @@
 import express from "express";
 import type { Request, Response } from "express";
 import path from "path";
-import fs from "fs";
 import { Wallet, Wallets, Gateway, X509Identity } from "fabric-network";
 import fabricCAClient from "fabric-ca-client";
 import { IdentityContext, User } from "fabric-common";
 import config from "../config/config.json";
 // @ts-ignore
 import channelConnection from "../../vars/profiles/mainchannel_connection_for_nodesdk.json";
-import { randomUUID } from "crypto";
 import cors from "cors";
 import bodyParser from "body-parser";
-import jwt, { Jwt } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { getUserFromId, openDb, UserRow } from "./db";
 import bcrypt from "bcrypt";
@@ -475,13 +473,14 @@ app.post("/issue", async (req: Request, res: Response) => {
     const contract = network.getContract("mycc");
     const issueTransaction = contract.createTransaction("issue");
     const issueDate = new Date();
-    const expireDate = new Date().setFullYear(issueDate.getFullYear() + 1);
+    const expireDate = new Date();
+    expireDate.setFullYear(issueDate.getFullYear() + 1);
     const faceValue = req.body.amount;
     const issueing = JSON.parse(
         (
             await issueTransaction.submit(
-                issueDate.toString(),
-                expireDate.toString(),
+                issueDate.toISOString(),
+                expireDate.toISOString(),
                 faceValue
             )
         ).toString()

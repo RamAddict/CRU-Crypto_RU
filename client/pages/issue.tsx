@@ -7,7 +7,6 @@ import axios, { AxiosResponse } from "axios";
 import { useRouter } from "next/router";
 
 const Issue: NextPage = () => {
-    const [error1, setError1] = useState<string>();
     const [error2, setError2] = useState<string>();
     const [form, setForm] = useState<Number>();
     const router = useRouter();
@@ -42,10 +41,16 @@ const Issue: NextPage = () => {
                             if (!window.localStorage.getItem("token")) {
                                 router.push("/login");
                             }
-                            event.currentTarget.setAttribute(
-                                "disabled",
-                                "true"
-                            );
+                            (
+                                document.getElementById(
+                                    "submitButton"
+                                ) as HTMLInputElement
+                            ).disabled = true;
+                            (
+                                document.getElementById(
+                                    "submitButton"
+                                ) as HTMLInputElement
+                            ).className += " opacity-50";
                             axios
                                 .post(
                                     config.server + "/issue",
@@ -64,7 +69,7 @@ const Issue: NextPage = () => {
                                     setError2("✅ Tokens criados!");
                                     setTimeout(
                                         router.push.bind(null, "/"),
-                                        3000
+                                        1500
                                     );
                                 })
                                 .catch((e) => {
@@ -74,14 +79,6 @@ const Issue: NextPage = () => {
                                             "Erro: " +
                                                 e.response?.data["result"]
                                         );
-                                })
-                                .finally(() => {
-                                    if (event.currentTarget !== null) {
-                                        event.currentTarget.setAttribute(
-                                            "disabled",
-                                            "false"
-                                        );
-                                    }
                                 });
                         }}
                     >
@@ -99,12 +96,8 @@ const Issue: NextPage = () => {
                                 className="w-5/12 ml-28 mt-2 rounded-xl h-10"
                             ></input>
                         </div>
-                        {error1 ? (
-                            <p className="text-white text-center mt-2 ml-2">
-                                {error1}
-                            </p>
-                        ) : null}
                         <button
+                            id="submitButton"
                             type="submit"
                             className="mt-8 w-full text-center bg-[#FEB93F] py-3 rounded-xl text-lg drop-shadow-md"
                         >
