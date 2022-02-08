@@ -6,6 +6,8 @@ import config from "../config/config.json";
 import axios, { Axios } from "axios";
 import faker, { phone } from "faker";
 import { useRouter } from "next/router";
+import { generate, validate } from "gerador-validador-cpf"
+import validator from "validator"; 
 
 const Register: NextPage = () => {
     const [error, setError] = useState<string>();
@@ -36,6 +38,10 @@ const Register: NextPage = () => {
                         onSubmit={async (event) => {
                             event.preventDefault();
                             console.log(form);
+                            if (!validate(form["CPF"]))
+                                return alert("CPF inválido");
+                            if (!validator.isMobilePhone(form["Telefone"], "pt-BR"))
+                                return alert("Telefone inválido");
                             try {
                                 const res = await axios.post(
                                     config.server + "/register",
@@ -88,6 +94,8 @@ const Register: NextPage = () => {
                                             ? "email"
                                             : field === "Senha"
                                             ? "password"
+                                            : field === "Matrícula"
+                                            ? "tel"
                                             : "text"
                                     }
                                 />
@@ -103,13 +111,13 @@ const Register: NextPage = () => {
                                 e.preventDefault();
                                 setForm({
                                     Nome: faker.name.findName(),
-                                    CPF: faker.address.zipCode(),
+                                    CPF: generate(),
                                     Matrícula: faker.datatype
                                         .number()
                                         .toString(),
                                     "E-mail": faker.internet.email(),
                                     Senha: faker.internet.password(),
-                                    Telefone: faker.phone.phoneNumber(),
+                                    Telefone: faker.phone.phoneNumber("+554899#######"),
                                 });
                             }}
                         >
