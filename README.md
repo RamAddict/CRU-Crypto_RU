@@ -11,16 +11,29 @@ Para realizar a modelagem preliminar da aplicação web utilizamos a ferramenta 
 
 
 # Installation
-Clone this repository on your HOME (```~/CRU```)
 
-Make sure you are on the root of the project, then:
+### **Attention! All scripts assume you are running them from the project source folder "/cru"**
 
-run <br>
-    `bash install_everything.sh` <br>
-then <br>
-    `bash run_network.sh` <br>
-then <br>
-    `bash start_server.sh` <br>
+#### 1. Clone this repository on your HOME (```~/CRU```)
 
+#### 2. Make sure you are on the root of the project, then:
+
+#### 2.1 run
+
+    bash install_everything.sh
+
+#### 2.2 then
+
+    bash run_network.sh
+
+#### 2.3 then
+
+    bash start_server.sh
+
+#### 2.4 then
+
+    bash start_client.sh
+
+#### 2.5 And you're done. 
 # Dependencies
 This project requires minifabric, node and docker. The install_everything script will download and install everything for you.

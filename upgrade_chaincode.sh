@@ -1,6 +1,6 @@
 #!/bin/bash
 # run with source"!!!
-cd /home/arthur/CRU
+cd ~/CRU
 echo "compiling before upgrade"
 
 cd node/src
