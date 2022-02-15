@@ -45,12 +45,7 @@ const Home: NextPage = () => {
                 <header className="md:py-10"></header>
                 <main className="md:flex-grow flex-col my-auto">
                     <section className="text-white text-center mx-auto my-auto flex flex-grow">
-                        <img
-                            src="/cru.png"
-                            alt="cru"
-                            className="mx-auto md:my-auto md:mr-80 shadow-md"
-                        />
-                        <div className="w-3/12 md:py-10 md:pr-10">
+                        <div className="md:mr-0 mx-auto md:w-3/12 md:py-10 md:pr-10">
                             <p>Bem vind@, {beneficiary}</p>
                             <p>Seu saldo é:</p>
                             <p className="text-4xl">
@@ -82,6 +77,14 @@ const Home: NextPage = () => {
                         </div>
                     </section>
                     <section className="space-y-4">
+                        <div className="mx-auto max-w-5xl">
+                            {" "}
+                            <img
+                                src="/cru.png"
+                                alt="cru"
+                                className="md:-mt-24 mx-auto md:my-auto shadow-md"
+                            />
+                        </div>
                         <p className="block text-white text-center mx-auto my-auto">
                             Ações:
                         </p>
