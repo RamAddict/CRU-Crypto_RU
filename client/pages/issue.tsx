@@ -101,7 +101,7 @@ const Issue: NextPage = () => {
                             type="submit"
                             className="mt-8 w-full text-center bg-[#FEB93F] py-3 rounded-xl text-lg drop-shadow-md"
                         >
-                            Gerar
+                            Emitir
                         </button>
                         {error2 ? (
                             <p className="text-white text-center mt-2 ml-2">

@@ -63,8 +63,8 @@ export class Token implements IToken {
         return this.currentState === other.currentState && 
         this.tokenId === other.tokenId && 
         this.owner === other.owner && 
-        this.issueDate === other.issueDate &&
-        this.maturityDate === other.maturityDate &&
+        this.issueDate.getTime() === other.issueDate.getTime() &&
+        this.maturityDate.getTime() === other.maturityDate.getTime() &&
         this.faceValue === other.faceValue;
     }
     
@@ -81,7 +81,7 @@ export class Token implements IToken {
         owner,
         tokenId,
     }: IToken): Token {
-        const token = new Token(tokenId, owner, issueDate, maturityDate, faceValue);
+        const token = new Token(tokenId, owner, new Date(issueDate), new Date(maturityDate), faceValue);
         token.currentState = currentState;
         return token;
     }

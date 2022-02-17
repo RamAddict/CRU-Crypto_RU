@@ -171,7 +171,7 @@ router.get("/me", async (req: Request, res: Response) => {
         const network = await gateway.getNetwork("mainchannel");
         const contract = network.getContract("mycc");
         const getBalanceTransaction = contract.createTransaction("getBalance");
-        balance = (await getBalanceTransaction.submit(walletId)).toString();
+        balance = (await getBalanceTransaction.submit(walletId, new Date().toISOString())).toString();
     } else {
         console.error("oh no");
         return res.status(403).json("couldn't find wallet");
@@ -474,7 +474,8 @@ app.post("/issue", async (req: Request, res: Response) => {
     const issueTransaction = contract.createTransaction("issue");
     const issueDate = new Date();
     const expireDate = new Date();
-    expireDate.setFullYear(issueDate.getFullYear() + 1);
+    // expireDate.setFullYear(issueDate.getFullYear() + 1);
+    expireDate.setMinutes(issueDate.getMinutes() + 10);
     const faceValue = req.body.amount;
     const issueing = JSON.parse(
         (

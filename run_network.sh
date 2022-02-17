@@ -22,7 +22,13 @@ sleep 3
 ./minifab channelquery
 ./minifab discover
 ./minifab explorerup
-sleep 40 # 40 seg
+if [[ -n "$IS_WSL" || -n "$WSL_DISTRO_NAME" ]]; then
+    echo "This is WSL. Waiting a while, otherwise it might not work"
+    sleep 300
+else
+    echo "This is not WSL. Waiting a little while, otherwise it might not work"
+    sleep 50
+fi
 echo "Done setting up docker and channel"
 
 # echo -e "\n\nbuilt code, will try to install it now\n\n"

@@ -1,8 +1,4 @@
-import {
-    ChaincodeResponse,
-    ChaincodeStub,
-    Shim,
-} from "fabric-shim";
+import { ChaincodeResponse, ChaincodeStub, Shim } from "fabric-shim";
 import { Token, ETState } from "./Token";
 import { ITXList, TXList } from "./TXList";
 import {
@@ -28,7 +24,10 @@ function parseStringArray(
         } else if (!Number.isNaN(new Date(el).getDate())) {
             // Try Date
             return new Date(el);
-        } else if (el.toLowerCase() === "true" || el.toLowerCase() === "false") {
+        } else if (
+            el.toLowerCase() === "true" ||
+            el.toLowerCase() === "false"
+        ) {
             // Try Boolean
             return new Boolean(el);
         } else {
@@ -67,12 +66,15 @@ class Chaincode {
             let initialIssue = new Token(
                 await Chaincode.produceNextId(stub),
                 "admin",
-                new Date("2021-01-01"),
                 new Date("2022-01-01"),
+                new Date("2023-01-01"),
                 1e6
             );
             initialIssue.currentState = ETState.ISSUED;
-            await stub.putState("UTXOLIST", new TXList([initialIssue]).serialize());
+            await stub.putState(
+                "UTXOLIST",
+                new TXList([initialIssue]).serialize()
+            );
             // create very first emission
             return Shim.success(initialIssue.serialize());
             // return Shim.success(Buffer.from("initializedMen"));
@@ -96,12 +98,15 @@ class Chaincode {
         const method = self[ret.fcn as AllowedMethod];
         if (!method) {
             console.log("no method of name:" + ret.fcn + " found");
-            return Shim.error(Buffer.from("no method of name:" + ret.fcn + " found"));
+            return Shim.error(
+                Buffer.from("no method of name:" + ret.fcn + " found")
+            );
         }
         try {
-            const params = [stub, ...parseStringArray(ret.params)] as Parameters<
-                typeof method
-            >;
+            const params = [
+                stub,
+                ...parseStringArray(ret.params),
+            ] as Parameters<typeof method>;
             // @ts-ignore
             const payload = await method(...params);
             switch (getType(payload)) {
@@ -128,12 +133,16 @@ class Chaincode {
         let id = 0;
         try {
             if (
-                new TextDecoder().decode(await stub.getState("tokenIDCounter")) !== null
+                new TextDecoder().decode(
+                    await stub.getState("tokenIDCounter")
+                ) !== null
             ) {
                 id =
                     1 +
                     Number(
-                        new TextDecoder().decode(await stub.getState("tokenIDCounter"))
+                        new TextDecoder().decode(
+                            await stub.getState("tokenIDCounter")
+                        )
                     );
             }
             stub.putState("tokenIDCounter", Buffer.from(id.toString()));
@@ -161,7 +170,9 @@ class Chaincode {
         // to = to.toString()
         // check whoever is sending can send tokens
         if (!from || !to || !quantity) {
-            let error = Shim.error(Buffer.from("Incorrect number of parameters"));
+            let error = Shim.error(
+                Buffer.from("Incorrect number of parameters")
+            );
             error.payload = Buffer.from(JSON.stringify({ code: "params" }));
             return error;
         }
@@ -180,8 +191,14 @@ class Chaincode {
             return error;
         }
         quantity = Number.parseFloat(quantity.toFixed(1));
+        const now = new Date(date);
         // check balance
-        let [tks, change] = await Chaincode.selectTksToSend(stub, from, quantity);
+        let [tks, change] = await Chaincode.selectTksToSend(
+            stub,
+            from,
+            quantity,
+            now
+        );
         Chaincode.logger.debug(JSON.stringify(tks));
         Chaincode.logger.debug(change);
         // if no tokens found, return error
@@ -196,17 +213,11 @@ class Chaincode {
         let expirationDate = new Date(tks[0].maturityDate);
         let issueDate = new Date(tks[0].issueDate);
         let tokenState = tks[0].currentState;
-        for (const token of tks) {
-            if (token.maturityDate < expirationDate) {
-                expirationDate = token.maturityDate;
-                issueDate = token.issueDate;
-                tokenState = token.currentState;
-            }
-        }
+        
         if (change !== 0) {
             // create change
             let newToken = new Token(
-                tks[0].tokenId,
+                await Chaincode.produceNextId(stub), // produceNextId(stub)
                 from,
                 issueDate,
                 expirationDate,
@@ -217,7 +228,7 @@ class Chaincode {
         }
         // create the token with the amount sent in the name of the recipient
         let newToken = new Token(
-            tks[0].tokenId,
+            await Chaincode.produceNextId(stub),
             to,
             issueDate,
             expirationDate,
@@ -229,17 +240,17 @@ class Chaincode {
 
         // delete these tokens
         for (const tk of tks) {
-            tokenList.txList.splice(
+            const deleted = tokenList.txList.splice(
                 tokenList.txList.findIndex((token) => token.isEqual(tk)),
                 1
             );
+            Chaincode.logger.debug("Deleted: " + deleted);
         }
         // write this back on chaincode
         await stub.putState("UTXOLIST", tokenList.serialize());
         // save on the to and froms user history
         let fromHist = await Chaincode.getHistoryList(stub, from);
         let toHist = await Chaincode.getHistoryList(stub, to);
-        const now = new Date(date);
         const newTransaction = new Transaction(from, to, quantity, now);
         fromHist.history.push(newTransaction);
         toHist.history.push(newTransaction);
@@ -250,27 +261,28 @@ class Chaincode {
         let ccresponse = Shim.success(
             Buffer.from(
                 "Transferred " +
-                quantity +
-                " from " +
-                from +
-                " to " +
-                to +
-                " tokenId: " +
-                tks[0].tokenId
+                    quantity +
+                    " from " +
+                    from +
+                    " to " +
+                    to +
+                    " tokenId: " +
+                    tks[0].tokenId
             )
         );
-        ccresponse.payload = Buffer.from(JSON.stringify({ code: "sucess" }));
+        ccresponse.payload = Buffer.from(JSON.stringify({ code: "success" }));
         return ccresponse;
     }
 
     static async selectTksToSend(
         stub: ChaincodeStub,
         owner: string,
-        quantity: number
+        quantity: number,
+        now: Date
     ): Promise<[Token[], number]> {
-        // get only the tokens that belong to the owner
+        // get only the tokens that belong to the owner and are still valid
         let tokensOfOwner = (await Chaincode.getUTXOList(stub)).txList.filter(
-            (token) => token.owner === owner
+            (token) => ((token.owner === owner) && (now <= token.maturityDate))
         );
         // seprate the ones bigger and smaller from the list
         const greaters = tokensOfOwner.filter(
@@ -281,13 +293,15 @@ class Chaincode {
             // get min value
             let min = greaters[0];
             for (const e of greaters) {
-                if (min.faceValue < e.faceValue) min = e;
+                if (e.faceValue < min.faceValue) min = e;
             }
             change = min.faceValue - quantity;
             return [[min], change];
         }
         // no values above the required, look for the sum in the lessers
-        let lessers = tokensOfOwner.filter((token) => token.faceValue < quantity);
+        let lessers = tokensOfOwner.filter(
+            (token) => token.faceValue < quantity
+        );
         // sort values
         lessers.sort((left, right) => left.faceValue - right.faceValue);
         let output = [];
@@ -328,9 +342,8 @@ class Chaincode {
         stub: ChaincodeStub,
         user: string
     ): Promise<TransactionHist> {
-        if ((await stub.getState(user)).length === 0)
-        {
-            this.logger.debug("creating fresh hist")
+        if ((await stub.getState(user)).length === 0) {
+            this.logger.debug("creating fresh hist");
             return new TransactionHist([]);
         }
         return TransactionHist.hydrateFromJSON(
@@ -347,13 +360,18 @@ class Chaincode {
      * @param {string} owner the identity
      * @Return the current c
      */
-    async getBalance(stub: ChaincodeStub, owner: string | Number): Promise<number> {
+    async getBalance(
+        stub: ChaincodeStub,
+        owner: string | Number,
+        date: string
+    ): Promise<number> {
         // query the elements in the UTXOLIST
-        if (typeof(owner) === "number")
-            owner = owner.toString();
+        if (typeof owner === "number") owner = owner.toString();
         let accum = 0;
+        const now = new Date(date);
         (await Chaincode.getUTXOList(stub)).txList.forEach((token) => {
-            if (token.owner === owner) accum += token.faceValue;
+            if ((token.owner === owner) && (now <= token.maturityDate))
+                accum += token.faceValue;
         });
 
         return accum;
@@ -369,7 +387,7 @@ class Chaincode {
      * @param {number} faceValue face value of token
      * @param {string} date current date for history
      */
-     async issue(
+    async issue(
         stub: ChaincodeStub,
         // owner: string,
         issueDate: Date,
@@ -407,7 +425,12 @@ class Chaincode {
         // save on the to and froms user history
         let adminHist = await Chaincode.getHistoryList(stub, adminId);
         const now = issueDate;
-        const newTransaction = new Transaction("Nova Emissão", adminId, faceValue, now);
+        const newTransaction = new Transaction(
+            "Nova Emissão",
+            adminId,
+            faceValue,
+            now
+        );
         adminHist.history.push(newTransaction);
 
         await stub.putState(adminId, adminHist.serialize());
@@ -427,7 +450,10 @@ class Chaincode {
         await stub.deleteState(A);
     }
 
-    async getHist(stub: ChaincodeStub, key: string): Promise<ChaincodeResponse> {
+    async getHist(
+        stub: ChaincodeStub,
+        key: string
+    ): Promise<ChaincodeResponse> {
         if (!key) throw new Error("Incorrent number of parameters");
         const list = [];
         const historyQueryIterator = await stub.getHistoryForKey(key);
@@ -489,7 +515,9 @@ class Chaincode {
         stub: ChaincodeStub,
         user: Number
     ): Promise<ChaincodeResponse> {
-        return Shim.success((await Chaincode.getHistoryList(stub, user.toString())).serialize());
+        return Shim.success(
+            (await Chaincode.getHistoryList(stub, user.toString())).serialize()
+        );
     }
     // async showIdentity(stub: ChaincodeStub): Promise<ChaincodeResponse> {
     //     // the purpose here is to show what the identities are within minifabric
