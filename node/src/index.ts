@@ -9,7 +9,7 @@ import {
 const MEC = "mec-example-com";
 
 /**
- * business unrelated function that takes a vector.
+ * Business unrelated function that takes a vector.
  * and returns the appropriate type of each element of the array
  * @param {Array} arr the parameter array
  * @return {(string | number | Boolean | Date)[]} an array containing the elements with the appropriate type
@@ -274,6 +274,14 @@ class Chaincode {
         return ccresponse;
     }
 
+    /**
+     * Choses the tokens required to create a transaction from the owner with the quanity required
+     *
+     * @param {ChaincodeStub} stub the transaction context
+     * @param {string} owner the identity which will give the tokens
+     * @param {string} quanity the total tokens to send
+     * @param {string} now the current time - to maintain consistency between peers when checking expiry
+     */
     static async selectTksToSend(
         stub: ChaincodeStub,
         owner: string,
@@ -333,9 +341,10 @@ class Chaincode {
     }
 
     /**
-     * Get the list of unspent transactions
+     * Returns a fresh History list in the name of the user, or the list if it exists
      *
      * @param {ChaincodeStub} stub the transaction context
+     * @param {string} user the user to get the hist from 
      * @Return the transaction list
      */
     static async getHistoryList(
@@ -358,7 +367,7 @@ class Chaincode {
      *
      * @param {ChaincodeStub} stub the transaction context
      * @param {string} owner the identity
-     * @Return the current c
+     * @Return the current balance
      */
     async getBalance(
         stub: ChaincodeStub,
@@ -381,15 +390,12 @@ class Chaincode {
      * Issue token, Mec is the only valid issuer
      *
      * @param {ChaincodeStub} stub the transaction context
-     * @param {number} tokenID token number for this issuer
      * @param {string} issueDate token issue date
      * @param {string} maturityDate token maturity date
      * @param {number} faceValue face value of token
-     * @param {string} date current date for history
      */
     async issue(
         stub: ChaincodeStub,
-        // owner: string,
         issueDate: Date,
         maturityDate: Date,
         faceValue: number
@@ -450,6 +456,12 @@ class Chaincode {
         await stub.deleteState(A);
     }
 
+    /**
+     * Returns the history of the UTXO, i.e. every possible way it has look like since creation, including
+     *
+     * @param {ChaincodeStub} stub the transaction context
+     * @param {string} key UTXO
+     */
     async getHist(
         stub: ChaincodeStub,
         key: string
@@ -511,6 +523,12 @@ class Chaincode {
         return Shim.success(Avalbytes);
     }
 
+    /**
+     * Returns the users history
+     *
+     * @param {ChaincodeStub} stub the transaction context
+     * @param {Number} user the user whose hist is required
+    */
     async getUserHist(
         stub: ChaincodeStub,
         user: Number
@@ -519,17 +537,6 @@ class Chaincode {
             (await Chaincode.getHistoryList(stub, user.toString())).serialize()
         );
     }
-    // async showIdentity(stub: ChaincodeStub): Promise<ChaincodeResponse> {
-    //     // the purpose here is to show what the identities are within minifabric
-    //     let returnStatement = "";
-    //     returnStatement += "The mspid of the creator: " + stub.getCreator().mspid + "\n";
-    //     returnStatement += "The mspid of the peer that is executing: " + stub.getMspID() + "\n";
-    //     const Cid = new ClientIdentity(stub);
-    //     returnStatement += "The Client Identity of who is asking for this function: " + Cid.getMSPID()
-    //     + " " + Cid.getAttributeValue("*") + "\n";
-    //     Chaincode.logger.debug(returnStatement);
-    //     return Shim.success();
-    // }
 }
 
 Shim.start(new Chaincode());

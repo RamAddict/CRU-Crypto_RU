@@ -59,9 +59,9 @@ export class TransactionHist implements ITransactionHist {
         return Buffer.from(JSON.stringify(this));
     }
     /**
-     * Creates a TXList object from a raw JSON object
-     * @param {ITXList} txList The object to rehydrate (typically the return of JSON.parse())
-     * @return {TXList} The hydrated list
+     * Creates a TransactionHist object from a raw JSON object
+     * @param {ITransactionHist} history The object to rehydrate (typically the return of JSON.parse())
+     * @return {TransactionHist} The hydrated list
      */
     static hydrateFromJSON(history: ITransactionHist): TransactionHist {
         return new TransactionHist(

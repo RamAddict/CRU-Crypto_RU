@@ -1,4 +1,4 @@
-import { Token, ETState, IToken } from "./Token";
+import { Token } from "./Token";
 
 export interface ITXList {
     txList: Token[];

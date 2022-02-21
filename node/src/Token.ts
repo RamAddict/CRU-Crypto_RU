@@ -8,11 +8,11 @@ export enum ETState {
 export interface IToken {
     // Token current state
     currentState: ETState;
-    // Token issue namehydrateFromJSON
+    // Token issue number id
     tokenId: number;
     // Token owner
     owner: string;
-    // Token issue date xx-xx-xxxx
+    // Token issue date
     issueDate: Date;
     // Maturity date
     maturityDate: Date;
