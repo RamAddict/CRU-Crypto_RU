@@ -113,7 +113,7 @@ const Login: NextPage = () => {
                 </main>
                 <footer className="py-2 text-center  text-white font-bolder flex justify-center content-center">
                     <span className="block my-auto ml-auto mr-auto md:flex-grow">
-                        Copyleft 🐀
+                        CRU - UFSC
                     </span>
                 </footer>
             </div>

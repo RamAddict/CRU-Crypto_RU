@@ -132,7 +132,7 @@ const Register: NextPage = () => {
                     </form>
                 </main>
                 <footer className="py-2 text-center  text-white font-bolder flex justify-center content-center">
-                    <span className="block my-auto">Copyleft 🐀</span>
+                    <span className="block my-auto ml-auto mr-auto md:flex-grow">CRU - UFSC</span>
                 </footer>
             </div>
         </>

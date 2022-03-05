@@ -70,7 +70,7 @@ class Chaincode {
                 new Date("2023-01-01"),
                 1e6
             );
-            initialIssue.currentState = ETState.ISSUED;
+            initialIssue.currentState = ETState.ACTIVE;
             await stub.putState(
                 "UTXOLIST",
                 new TXList([initialIssue]).serialize()
@@ -290,7 +290,7 @@ class Chaincode {
     ): Promise<[Token[], number]> {
         // get only the tokens that belong to the owner and are still valid
         let tokensOfOwner = (await Chaincode.getUTXOList(stub)).txList.filter(
-            (token) => ((token.owner === owner) && (now <= token.maturityDate))
+            (token) => ((token.owner === owner) && (now <= token.maturityDate) && (token.currentState !== ETState.FINALIZED))
         );
         // seprate the ones bigger and smaller from the list
         const greaters = tokensOfOwner.filter(
@@ -379,7 +379,7 @@ class Chaincode {
         let accum = 0;
         const now = new Date(date);
         (await Chaincode.getUTXOList(stub)).txList.forEach((token) => {
-            if ((token.owner === owner) && (now <= token.maturityDate))
+            if ((token.owner === owner) && (now <= token.maturityDate) && (token.currentState !== ETState.FINALIZED))
                 accum += token.faceValue;
         });
 
@@ -421,8 +421,8 @@ class Chaincode {
             maturityDate,
             faceValue
         );
-        // set Issued
-        token.currentState = ETState.ISSUED;
+        // set Active
+        token.currentState = ETState.ACTIVE;
         // add to world state
         let UTXOLIST = await Chaincode.getUTXOList(stub);
         UTXOLIST.txList.push(token);

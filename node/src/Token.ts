@@ -1,7 +1,5 @@
 export enum ETState {
-    ISSUED = 1,
-    DEPOSITED,
-    SPENT,
+    ACTIVE = 1,
     FINALIZED,
 }
 
