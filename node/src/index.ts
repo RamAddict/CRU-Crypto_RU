@@ -444,18 +444,6 @@ class Chaincode {
         return token;
     }
 
-    // Deletes an entity from state
-    async delete(stub: ChaincodeStub, args: string[]) {
-        if (args.length != 1) {
-            throw new Error("Incorrect number of arguments. Expecting 1");
-        }
-
-        const A = args[0];
-
-        // Delete the key from the state in ledger
-        await stub.deleteState(A);
-    }
-
     /**
      * Returns the history of the UTXO, i.e. every possible way it has look like since creation, including
      *
@@ -494,6 +482,7 @@ class Chaincode {
         }
     }
     // query callback representing the query of a chaincode
+    // for debug purposes only
     async query(
         stub: ChaincodeStub,
         ...args: string[]
@@ -537,6 +526,7 @@ class Chaincode {
             (await Chaincode.getHistoryList(stub, user.toString())).serialize()
         );
     }
+
 }
 
 Shim.start(new Chaincode());
